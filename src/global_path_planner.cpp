@@ -1,39 +1,53 @@
-
-#include <iostream>
-#include <vector>
-#include <queue>
-#include <tuple>
-#include <cmath>
-#include <algorithm>
+#include "global_path_planner.h"
 
 
-using namespace std;
+AstarPath::AstarPath():private_nh("~")
+{
+    private_nh.param("hz",hz,{10});                                     //実行した後に、hzの値を変えることができる。　{}はデフォルト値
+    private_nh.param("path_check",path_check,{false});
+    sub_map = nh.subscribe("/map",10,&AstarPath::map_callback,this);    //"/map"からマップをもらい、callback関数に送る
+    pub_path = nh.advertise<nav_msgs::Path>("/path",1);
+}
 
-// ノードの構造体
-struct Node {
-		int x, y;
-		double f, g, h;
+void AstarPath::map_callback(const nav_msgs::OccupancyGrid::ConstPtr &msg)
+//const nav_msgs::Odometry::ConstPtr は、const型(内容を書き換えられない)、nav_msgsパッケージに含まれる、Odometry型のメッセージの、const型ポインタを表している
+//&msgの&は、参照型(内容を書き換えられるように変数を渡すことができる)という意味ですが、(const型なので)ここでは特に気にする必要はない
+{
+    if(map_check){
+        return;     //exit from processing on the way
+    }
+    else
+    {
+        the_map = *msg;
+        int row = the_map.info.height;          //row = 4000
+        int col = the_map.info.width;           //col = 4000
+        map_grid = vector<vector<int>>(row,vector<int>(col,0));
 
-		Node(int x, int y, double g, double h) : x(x), y(y), g(g), h(h), f(g + h) {}
-};
-
-struct NodeComparator {
-		bool operator()(const Node &n1, const Node &n2) {
-				return n1.f > n2.f;
-		}
-};
+        //change 1D the_map to 2D
+        for(int i=0; i<row; i++)
+        {
+            for(int j=0; j<col; j++)
+            {
+                map_grid[i][j] = the_map.data[i+j*row];
+            }
+        }
+        // origin mean point which is edge of left down
+        origin.x = the_map.info.origin.position.x;      //origin.x = -100
+        origin.y = the_map.info.origin.position.y;      //origin.y = -100
+    }
+}
 
 vector<pair<int, int>> neighbors = {{-1, 0}, {1, 0}, {0, -1}, {0, 1}};
 
-bool isValid(int x, int y, int rows, int cols) {
+bool AstarPath::isValid(int x, int y, int rows, int cols) {
 		return x >= 0 && x < rows && y >= 0 && y < cols;
 }
 
-double heuristic(int x1, int y1, int x2, int y2) {
+double AstarPath::heuristic(int x1, int y1, int x2, int y2) {
 		return sqrt(pow(x1 - x2, 2) + pow(y1 - y2, 2));
 }
 
-vector<pair<int, int>> a_star(vector<vector<int>> &grid, pair<int, int> start, pair<int, int> goal) {
+vector<pair<int, int>> AstarPath::a_star() {
 		int rows = grid.size(), cols = grid[0].size();
 
 		printf("rows=%d, cols=%d\n", rows, cols); // デバッグ用
@@ -84,27 +98,26 @@ vector<pair<int, int>> a_star(vector<vector<int>> &grid, pair<int, int> start, p
 		return {};  // 経路が見つからない場合、空のベクタを返す
 }
 
+void AstarPath::process()
+{
+	ros::Rate loop_rate(hz);
+    while(ros::ok())
+    {
+        if(!global_path.empty() && !grid.empty())
+        {
+					global_path = a_star();
+					pub_path.publish(global_path);
+        }
+
+        ros::spinOnce();
+        loop_rate.sleep();
+    }
+}
+
 int main() {
-		vector<vector<int>> grid = {
-				{0, 0, 0, 0, 0},
-				{0, 0, 0, 0, 0},
-				{1, 1, 1, 0, 1},
-				{0, 0, 0, 0, 0},
-		};
-
-		pair<int, int> start = {0, 0};
-		pair<int, int> goal = {3, 4};
-
-		vector<pair<int, int>> path = a_star(grid, start, goal);
-
-		// if (path.empty()) {
-		// 		cout << "経路が見つかりませんでした。" << endl;
-		// } else {
-				cout << "見つかった経路：" << endl;
-				for (const auto &p : path) {
-						cout << "(" << p.first << ", " << p.second << ")" << endl;
-				}
-		// }
-
+		AstarPath astar;
+		astar.start = {0, 0};
+		astar.goal = {3, 4};
+		astar.process();
 		return 0;
 }
