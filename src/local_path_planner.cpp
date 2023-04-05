@@ -13,7 +13,7 @@ DWA::DWA():private_nh_("~")
     private_nh_.param("min_vel", min_vel_, {0.0});
     private_nh_.param("max_yawrate", max_yawrate_, {0.8});
     private_nh_.param("max_yawrate", max_accel_, {1.0});
-    private_nh_.param("max_yawrate", max_yawaccel_, {1.0});
+    private_nh_.param("max_yawaccel", max_yawaccel_, {1.0});
     private_nh_.param("predict_time", predict_time_, {1.0});
     private_nh_.param("weight_heading", weight_heading_, {1.0});
     private_nh_.param("weight_distance", weight_distance_, {1.0});
@@ -57,8 +57,8 @@ bool DWA::goal_check()
     if(flag_ob_position_ = false)
         return false;
 
-    double dx = waypoints_.x - roomba_.x;
-    double dy = waypoints_.y - roomba_.y;
+    double dx = waypoints_.point.x - roomba_.x;
+    double dy = waypoints_.point.y - roomba_.y;
     double dist_to_goal = hypot(dx, dy);
 
     if(dist_to_goal > goal_tolerance_)
@@ -131,7 +131,7 @@ double DWA::calc_heading_eval(std::vector<State>& traj)
     double theta = traj.back().yaw;
 
     //最終時刻での位置に対するゴール方向
-    double goal_theta = atan2(waypoints_.y - traj.back().y, waypoints_.x - traj.back().x);
+    double goal_theta = atan2(waypoints_.point.y - traj.back().y, waypoints_.point.x - traj.back().x);
 
     //ゴールまでの方位差分
     double target_theta = 0.0;  //初期化

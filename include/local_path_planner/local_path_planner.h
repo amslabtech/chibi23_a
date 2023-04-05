@@ -61,8 +61,8 @@ class DWA
         bool goal_check();  //途中のゴール(waypoints)に着くまでtrueを返す
         std::vector<double> calc_input();  //最適な制御入力を計算
 
-        //launchファイルで設定可能な変数
-        int hz_;        //ループ周波数
+        //yamlファイルで設定可能な変数
+        int hz_;        //ループ周波数[Hz]
         double goal_tolerance_;  //waypoints_に対する許容誤差[m]
         double min_vel_;     //最低並進速度[m/s]
         double max_vel_;     //最高並進速度[m/s]
