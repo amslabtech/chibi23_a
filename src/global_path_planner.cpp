@@ -114,7 +114,8 @@ void AstarPath::process()
     }
 }
 
-int main() {
+int main(int argc, char **argv) {
+    ros::init(argc, argv, "global_path_planner");           //node name "Global_path_planner"
 		AstarPath astar;
 		astar.start = {0, 0};
 		astar.goal = {3, 4};
