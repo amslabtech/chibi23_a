@@ -153,11 +153,11 @@ double DWA::calc_distance_eval(std::vector<State>& traj)
     //roombaの軌道上に障害物がないか探索
     for(auto& state : traj)
     {
-        for(auto& obstacle : ob_position_)  //ob_position_の部分は名前を直す必要があるかも
+        for(auto& obstacle : ob_position_.poses)  //ob_position_の部分は名前を直す必要があるかも
         {
             //障害物までの距離を計算
-            double dx = obstacle.x - state.x;
-            double dy = obstacle.y - state.y;
+            double dx = obstacle.position.x - state.x;
+            double dy = obstacle.position.y - state.y;
             dist_to_ob = hypot(dx, dy);
 
             //distanceの評価値を計算
