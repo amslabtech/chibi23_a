@@ -2,11 +2,13 @@
 #define LOCAL_PATH_PLANNER_H
 
 #include <ros/ros.h>
+#include <geometry_msgs/TransformStamped.h>
 #include <geometry_msgs/PointStamped.h>
 #include <geometry_msgs/PoseStamped.h>
 #include <geometry_msgs/PoseArray.h>
 #include <nav_msgs/Path.h>
 #include <roomba_500driver_meiji/RoombaCtrl.h>
+#include <tf2_ros/transform_listener.h>
 #include <tf2/utils.h>
 
 
@@ -81,6 +83,7 @@ class DWA
         bool visualize_check_;  //パスを可視化するかどうかの設定用
 
         //msgの受け取り判定用
+        bool flag_waypoints_ = false;
         bool flag_ob_position_ = false;
 
         //その他の変数
@@ -120,6 +123,9 @@ class DWA
 
         geometry_msgs::PointStamped waypoints_;
         geometry_msgs::PoseArray ob_position_;
+
+        //tf
+        tf2_ros::Buffer tf_buffer_;
 
         //制御入力
         roomba_500driver_meiji::RoombaCtrl cmd_vel_;

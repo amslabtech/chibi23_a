@@ -39,8 +39,23 @@ DWA::DWA():private_nh_("~")
 //waypointsのコールバック関数
 void DWA::waypoints_callback(const geometry_msgs::PointStamped::ConstPtr& msg)
 {
-    waypoints_ = *msg;
-    //try ~ catchみたいな部分も必要…？
+    geometry_msgs::TransformStamped transform;
+
+    //waypoints_の座標系をbase_linkに合わせる
+    try
+    {
+        transform = tf_buffer_.lookupTransform("base_link", "map", ros::Time(0));
+        flag_waypoints_ = true;
+    }
+    catch(tf2::TransformException& ex)
+    {
+        ROS_WARN("%s", ex.what());
+        flag_waypoints_ = false;
+        return;
+    }
+
+    tf2::doTransform(*msg, waypoints_, transform);
+
 }
 
 //ob_position_のコールバック関数
@@ -54,7 +69,7 @@ void DWA::ob_position_callback(const geometry_msgs::PoseArray::ConstPtr& msg)
 bool DWA::goal_check()
 {
     //msg受信済みか確認
-    if(flag_ob_position_ = false)
+    if((flag_ob_position_) || (flag_waypoints_) == false)
         return false;
 
     double dx = waypoints_.point.x - roomba_.x;
