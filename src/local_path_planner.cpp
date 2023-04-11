@@ -51,6 +51,7 @@ void DWA::waypoints_callback(const geometry_msgs::PointStamped::ConstPtr& msg)
     {
         ROS_WARN("%s", ex.what());
         flag_waypoints_ = false;
+        ROS_INFO("No waypoints_data");  //デバック用
         return;
     }
 
@@ -70,7 +71,10 @@ bool DWA::goal_check()
 {
     //msg受信済みか確認
     if((flag_ob_position_) || (flag_waypoints_) == false)
+    {
+        ROS_INFO("Data catch false");  //デバック用
         return false;
+    }
 
     double dx = waypoints_.point.x - roomba_.x;
     double dy = waypoints_.point.y - roomba_.y;
@@ -360,6 +364,7 @@ void DWA::process()
         else
         {
             roomba_control(0.0, 0.0);
+            ROS_INFO("Can't move!");  //デバック用
         }
 
         ros::spinOnce();
