@@ -28,7 +28,7 @@ DWA::DWA():private_nh_("~")
     //laser_sub_ = nh_.subscribe("/scan", 1, &DWA::laser_callback, this);
 
     //Subscriber
-    sub_waypoints_ = nh_.subscribe("/waypoints", 1, &DWA::waypoints_callback, this);  //"/waypoints"のところは名前変える必要あるかも？
+    sub_waypoints_ = nh_.subscribe("/local_goal", 1, &DWA::waypoints_callback, this);  //"/waypoints"のところは名前変える必要あるかも？
     sub_ob_position_ = nh_.subscribe("/local_map/obstacle", 1, &DWA::ob_position_callback, this);  //"/local_map/obstacle"のところは名前変える必要あるかも？
 
     //Publisher
@@ -41,7 +41,7 @@ DWA::DWA():private_nh_("~")
 void DWA::waypoints_callback(const geometry_msgs::PointStamped::ConstPtr& msg)
 {
     geometry_msgs::TransformStamped transform;
-    ROS_INFO("catch waypoints_data");
+    ROS_INFO("catch waypoints_data");  //デバック用
 
     //waypoints_の座標系をbase_linkに合わせる
     try
@@ -65,6 +65,7 @@ void DWA::waypoints_callback(const geometry_msgs::PointStamped::ConstPtr& msg)
 void DWA::ob_position_callback(const geometry_msgs::PoseArray::ConstPtr& msg)
 {
     ob_position_ = *msg;
+    ROS_INFO("catch ob_position_data");  //デバック用
     flag_ob_position_ = true;
 }
 
@@ -72,15 +73,19 @@ void DWA::ob_position_callback(const geometry_msgs::PoseArray::ConstPtr& msg)
 bool DWA::goal_check()
 {
     //msg受信済みか確認
-    if((flag_ob_position_) || (flag_waypoints_) == false)
+    if((flag_ob_position_ || flag_waypoints_) == false)
     {
         ROS_INFO("Data catch false");  //デバック用
         return false;
     }
 
+    ROS_INFO("Data catch success!");  //デバック用
+
     double dx = waypoints_.point.x - roomba_.x;
     double dy = waypoints_.point.y - roomba_.y;
     double dist_to_goal = hypot(dx, dy);
+
+    ROS_INFO("calc dist_to_goal");  //デバック用
 
     if(dist_to_goal > goal_tolerance_)
         return true;
@@ -137,10 +142,14 @@ std::vector<State> DWA::predict_trajectory(double velocity, double yawrate, doub
 double DWA::calc_evaluation(std::vector<State>& traj)
 {
     double heading_value = weight_heading_ * calc_heading_eval(traj);
+    ROS_INFO("calc heading_value success!");  //デバック用
     double distance_value = weight_distance_ * calc_distance_eval(traj);
+    ROS_INFO("calc distance_value success!");  //デバック用
     double velocity_value = weight_velocity_ * calc_velocity_eval(traj);
+    ROS_INFO("calc velocity_value success!");  //デバック用
 
     double total_score = heading_value + distance_value + velocity_value;
+    ROS_INFO("calc total_score success!");  //デバック用
 
     return total_score;
 }
@@ -216,11 +225,15 @@ std::vector<double> DWA::calc_input()
     //input[0] = velocity, input[1] = yawrate;
     std::vector<double> input{0.0, 0.0};
     dt_ = 1.0 / hz_;
+    ROS_INFO("calc hz_");  //デバック用
 
     //ダイナミックウィンドウを計算
     calc_dynamic_window(dt_);
+    ROS_INFO("calc dynamic_window success!");  //デバック用
 
-    std::vector< std::vector<double> > score;  //すべての制御入力に対する評価値格納用
+    double one_score;  //計算したスコア格納用
+    std::vector<double> score_yawrate;  //計算したスコア一次保存用
+    std::vector< std::vector<double> > scores;  //すべての制御入力に対する評価値格納用
     std::vector< std::vector<State> > trajectories;  //すべての軌跡格納用
 
     int i = 0;  //カウンタ変数
@@ -235,24 +248,34 @@ std::vector<double> DWA::calc_input()
         for(double yawrate=dw_.min_yawrate; yawrate<=dw_.max_yawrate; yawrate+=yawrate_step_)
         {
             std::vector<State> traj = predict_trajectory(velocity, yawrate, dt_);  //予測軌道を生成
-            score[i][j] = calc_evaluation(traj);  //予測軌道に評価関数を適用
+            ROS_INFO("create predict_trajectory success!");  //デバック用
+                                                             //
+            one_score = calc_evaluation(traj);  //予測軌道に評価関数を適用
+            score_yawrate.push_back(one_score);
+            ROS_INFO("calc_evaluation success!");  //デバック用
             trajectories.push_back(traj);
 
             j++;
         }
 
+        scores.push_back(score_yawrate);
+
         //yawrateの分割個数を格納
         if(i = 0)
             yawrate_size = j;
 
+
         i++;
     }
+
+    ROS_INFO("calc all score finish! ");  //デバック用
 
     //velocityの分割個数を格納
     vel_size = i;
 
     //評価値に対してスムージング関数を適用
     std::vector< std::vector<double> > smoothing_score;  //スムージング関数適用後評価値格納用
+    smoothing_score = scores;
 
     double score_sum;  //隣接する評価値との合計値を格納
     int k = 0;  //カウンタ変数
@@ -268,7 +291,7 @@ std::vector<double> DWA::calc_input()
             {
                 for(int n=j-1; n<=j+1; n++)
                 {
-                    score_sum += score[m][n];
+                    score_sum += scores[m][n];
                 }
             }
 
@@ -278,6 +301,8 @@ std::vector<double> DWA::calc_input()
         }
         k++;
     }
+
+    ROS_INFO("get smoothing_score!");  //デバック用
 
     //評価値が一番大きいデータの探索
     double max_score = smoothing_score[0][0];  //評価値の最大値格納用
@@ -298,9 +323,13 @@ std::vector<double> DWA::calc_input()
         }
     }
 
+    ROS_INFO("decide max_score!");  //デバック用
+
     //最適な制御入力を格納
     input[0] = dw_.min_vel + vel_step_ * (max_vel_score_index + 1);
     input[1] = dw_.min_yawrate + yawrate_step_ * (max_yawrate_score_index + 1);
+
+    ROS_INFO("decide input!");  //デバック用
 
     //現在速度の記録
     roomba_.velocity = input[0];
@@ -321,6 +350,8 @@ std::vector<double> DWA::calc_input()
                     visualize_traj(trajectories[i*j+j], pub_predict_path_, now);
             }
         }
+
+        ROS_INFO("visualize_traj success!");  //デバック用
     }
 
     return input;
@@ -368,8 +399,10 @@ void DWA::process()
     {
         if(goal_check())
         {
+            ROS_INFO("calc_input start");  //デバック用
             std::vector<double> input = calc_input();
             roomba_control(input[0], input[1]);
+            ROS_INFO("yattane!");  //デバック用
         }
         else
         {
