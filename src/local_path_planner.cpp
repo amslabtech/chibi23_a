@@ -353,6 +353,7 @@ void DWA::roomba_control(double velocity, double yawrate)
 void DWA::process()
 {
     ros::Rate loop_rate(hz_);
+    tf2_ros::TransformListener tf_listener(tf_buffer_);  //waypoints_の情報を取得
 
     while(ros::ok())
     {
