@@ -120,6 +120,7 @@ class DWA
         //Publisher
         ros::Publisher pub_cmd_vel_;
         ros::Publisher pub_predict_path_;
+        ros::Publisher pub_optimal_path_;
 
         geometry_msgs::PointStamped waypoints_;
         geometry_msgs::PoseArray ob_position_;

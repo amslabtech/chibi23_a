@@ -33,13 +33,15 @@ DWA::DWA():private_nh_("~")
 
     //Publisher
     pub_cmd_vel_ = nh_.advertise<roomba_500driver_meiji::RoombaCtrl>("/roomba/control", 1);
-    pub_predict_path_ = nh_.advertise<nav_msgs::Path>("predict_paths", 1);
+    pub_predict_path_ = nh_.advertise<nav_msgs::Path>("/predict_paths", 1);
+    pub_optimal_path_ = nh_.advertise<nav_msgs::Path>("/optimal_local_path", 1);
 }
 
 //waypointsのコールバック関数
 void DWA::waypoints_callback(const geometry_msgs::PointStamped::ConstPtr& msg)
 {
     geometry_msgs::TransformStamped transform;
+    ROS_INFO("catch waypoints_data");
 
     //waypoints_の座標系をbase_linkに合わせる
     try
@@ -232,8 +234,9 @@ std::vector<double> DWA::calc_input()
     {
         for(double yawrate=dw_.min_yawrate; yawrate<=dw_.max_yawrate; yawrate+=yawrate_step_)
         {
-            std::vector<State> traj = predict_trajectory(velocity, yawrate, dt_);
-            score[i][j] = calc_evaluation(traj);
+            std::vector<State> traj = predict_trajectory(velocity, yawrate, dt_);  //予測軌道を生成
+            score[i][j] = calc_evaluation(traj);  //予測軌道に評価関数を適用
+            trajectories.push_back(traj);
 
             j++;
         }
@@ -308,9 +311,15 @@ std::vector<double> DWA::calc_input()
     {
         ros::Time now = ros::Time::now();
 
-        for(i=0; i<trajectories.size(); i++)
+        for(i=0; i<=vel_size-2; i++)
         {
-            visualize_traj(trajectories[i], pub_predict_path_, now);
+            for(j=0; j<=yawrate_size-2; j++)
+            {
+                if((i ==  max_vel_score_index) && (j == max_yawrate_score_index))
+                    visualize_traj(trajectories[i*j+j], pub_optimal_path_, now);
+                else
+                    visualize_traj(trajectories[i*j+j], pub_predict_path_, now);
+            }
         }
     }
 
