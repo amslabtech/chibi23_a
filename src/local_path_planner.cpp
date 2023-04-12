@@ -13,8 +13,8 @@ DWA::DWA():private_nh_("~")
     private_nh_.param("max_vel", max_vel_, {0.2});
     private_nh_.param("min_vel", min_vel_, {0.0});
     private_nh_.param("max_yawrate", max_yawrate_, {0.8});
-    private_nh_.param("max_yawrate", max_accel_, {1.0});
-    private_nh_.param("max_yawaccel", max_yawaccel_, {1.0});
+    private_nh_.param("max_accel", max_accel_, {1000.0});
+    private_nh_.param("max_yawaccel", max_yawaccel_, {1000.0});
     private_nh_.param("predict_time", predict_time_, {1.0});
     private_nh_.param("weight_heading", weight_heading_, {1.0});
     private_nh_.param("weight_distance", weight_distance_, {1.0});
@@ -225,15 +225,13 @@ std::vector<double> DWA::calc_input()
 {
     //input[0] = velocity, input[1] = yawrate;
     std::vector<double> input{0.0, 0.0};
-    dt_ = 1.0 / hz_;
-    // ROS_INFO("calc hz_");  //デバック用
 
     //ダイナミックウィンドウを計算
     calc_dynamic_window();
     // ROS_INFO("calc dynamic_window success!");  //デバック用
 
     double one_score;  //計算したスコア格納用
-    std::vector<double> score_yawrate;  //計算したスコア一次保存用
+    std::vector<double> score_yawrate;  //計算したスコア一時保存用
     std::vector< std::vector<double> > scores;  //すべての制御入力に対する評価値格納用
     std::vector< std::vector<State> > trajectories;  //すべての軌跡格納用
 
@@ -285,13 +283,15 @@ std::vector<double> DWA::calc_input()
     // smoothing_score = scores;
 
     double score_sum;  //隣接する評価値との合計値を格納
-    int k = 0;  //カウンタ変数
+    int k = yawrate_size;  //カウンタ変数
     // int l = 0;  //カウンタ変数
 
     double max_score = -1000.0;  //評価値の最大値格納用
     int max_vel_score_index = 0;  //評価値が最大となる速度のインデックス格納用
     int max_yawrate_score_index = 0;  //評価値が最大となる旋回速度のインデックス格納用
     int max_score_index = 0;  //評価値が最大のときのインデックス格納用
+
+    ROS_INFO("kokomade dekiteruyo!");  //デバック用
 
     for(i=1; i<vel_size; i++)  //隣接するデータ数が減ってしまう端のデータは使わない
     {
@@ -304,12 +304,12 @@ std::vector<double> DWA::calc_input()
                 for(int n=j-1; n<=j+1; n++)
                 {
                     score_sum += scores[m][n];
-                    ROS_INFO("calc score_sum");  //デバック用
+                    ROS_INFO("calc score_sum[%d][%d]", i, j);  //デバック用
                 }
             }
 
             smoothing_score = score_sum / 9.0;
-            // ROS_INFO("k = %d, l = %d, smoothing_score = %lf", k, l, smoothing_score[k][l]);  //デバック用
+            ROS_INFO("smoothing_score = %lf", smoothing_score);  //デバック用
 
             //評価値が一番大きいデータの探索
             if(max_score < smoothing_score)
@@ -317,7 +317,8 @@ std::vector<double> DWA::calc_input()
                 max_score = smoothing_score;
                 max_vel_score_index = i;
                 max_yawrate_score_index = j;
-                max_vel_score_index = k;
+                max_score_index = k;
+                ROS_INFO("update max_score");  //デバック用
             }
 
             k++;
@@ -343,6 +344,7 @@ std::vector<double> DWA::calc_input()
         }
     }*/
 
+    ROS_INFO("max_score_index: %d", max_score_index);  //デバック用
     ROS_INFO("max_score: %lf", max_score);  //デバック用
 
     //最適な制御入力を格納
@@ -360,7 +362,7 @@ std::vector<double> DWA::calc_input()
     roomba_.yawrate = input[1];
 
     //パスを可視化して適切なパスが選択できているかを評価
-    if(visualize_check_ = true)
+    if(visualize_check_ == true)
     {
         ros::Time now = ros::Time::now();
 
