@@ -2,11 +2,13 @@
 #define LOCAL_PATH_PLANNER_H
 
 #include <ros/ros.h>
+#include <geometry_msgs/TransformStamped.h>
 #include <geometry_msgs/PointStamped.h>
 #include <geometry_msgs/PoseStamped.h>
 #include <geometry_msgs/PoseArray.h>
 #include <nav_msgs/Path.h>
 #include <roomba_500driver_meiji/RoombaCtrl.h>
+#include <tf2_ros/transform_listener.h>
 #include <tf2/utils.h>
 
 
@@ -46,9 +48,8 @@ class DWA
         //void NormalizationYaw(double& yaw, double& theta, int& check, int& tmp_check, double& plus_pi);
 
         //引数あり関数
-        void calc_dynamic_window(double dt);  //Dynamic Windowの計算
-        void move_image(State& imstate, double velocity, double yawrate, double dt);  //仮想ロボットを移動
-        std::vector<State> predict_trajectory(double velocity, double yawrate, double dt);  //予測軌道を作成
+        void move_image(State& imstate, double velocity, double yawrate);  //仮想ロボットを移動
+        std::vector<State> predict_trajectory(double velocity, double yawrate);  //予測軌道を作成
         double calc_evaluation(std::vector<State>& traj);  //評価関数を計算する
         double calc_heading_eval(std::vector<State>& traj);  //heading(1項目)の評価関数を計算する
         double calc_distance_eval(std::vector<State>& traj);  //distance(2項目)の評価関数を計算する
@@ -59,10 +60,12 @@ class DWA
 
         //引数なし関数
         bool goal_check();  //途中のゴール(waypoints)に着くまでtrueを返す
+        void calc_dynamic_window();  //Dynamic Windowの計算
         std::vector<double> calc_input();  //最適な制御入力を計算
 
         //yamlファイルで設定可能な変数
         int hz_;        //ループ周波数[Hz]
+        double dt_;       //微小時間[s]
         double goal_tolerance_;  //waypoints_に対する許容誤差[m]
         double min_vel_;     //最低並進速度[m/s]
         double max_vel_;     //最高並進速度[m/s]
@@ -81,10 +84,8 @@ class DWA
         bool visualize_check_;  //パスを可視化するかどうかの設定用
 
         //msgの受け取り判定用
+        bool flag_waypoints_ = false;
         bool flag_ob_position_ = false;
-
-        //その他の変数
-        double dt_;       //微小時間[s]
 
        // double yaw_;
         //double theta_;
@@ -117,9 +118,13 @@ class DWA
         //Publisher
         ros::Publisher pub_cmd_vel_;
         ros::Publisher pub_predict_path_;
+        ros::Publisher pub_optimal_path_;
 
         geometry_msgs::PointStamped waypoints_;
         geometry_msgs::PoseArray ob_position_;
+
+        //tf
+        tf2_ros::Buffer tf_buffer_;
 
         //制御入力
         roomba_500driver_meiji::RoombaCtrl cmd_vel_;
