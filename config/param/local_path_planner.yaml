@@ -10,8 +10,8 @@ min_vel: 0.0  #最低並進速度[m/s]
 max_yawrate: 1.0 #最高旋回速度[rad/s]
 
 #加速度制限(Dynamic Window関連)
-max_accel: 100.0  #最高並進加速度[m/s^2]
-max_yawaccel: 100.0  #最高旋回加速度[m/s^2]
+max_accel: 1000.0  #最高並進加速度[m/s^2]
+max_yawaccel: 1000.0  #最高旋回加速度[m/s^2]
 
 #速度解像度
 vel_step: 0.05
