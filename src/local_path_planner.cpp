@@ -8,6 +8,7 @@
 DWA::DWA():private_nh_("~")
 {
     private_nh_.param("hz", hz_, {10});
+    private_nh_.param("dt", dt_, {0.1});
     private_nh_.param("goal_tolerance", goal_tolerance_, {0.1});
     private_nh_.param("max_vel", max_vel_, {0.2});
     private_nh_.param("min_vel", min_vel_, {0.0});
@@ -41,7 +42,7 @@ DWA::DWA():private_nh_("~")
 void DWA::waypoints_callback(const geometry_msgs::PointStamped::ConstPtr& msg)
 {
     geometry_msgs::TransformStamped transform;
-    ROS_INFO("catch waypoints_data");  //デバック用
+    // ROS_INFO("catch waypoints_data");  //デバック用
 
     //waypoints_の座標系をbase_linkに合わせる
     try
@@ -53,7 +54,7 @@ void DWA::waypoints_callback(const geometry_msgs::PointStamped::ConstPtr& msg)
     {
         ROS_WARN("%s", ex.what());
         flag_waypoints_ = false;
-        ROS_INFO("No waypoints_data");  //デバック用
+        // ROS_INFO("No waypoints_data");  //デバック用
         return;
     }
 
@@ -65,7 +66,7 @@ void DWA::waypoints_callback(const geometry_msgs::PointStamped::ConstPtr& msg)
 void DWA::ob_position_callback(const geometry_msgs::PoseArray::ConstPtr& msg)
 {
     ob_position_ = *msg;
-    ROS_INFO("catch ob_position_data");  //デバック用
+    // ROS_INFO("catch ob_position_data");  //デバック用
     flag_ob_position_ = true;
 }
 
@@ -75,17 +76,17 @@ bool DWA::goal_check()
     //msg受信済みか確認
     if((flag_ob_position_ || flag_waypoints_) == false)
     {
-        ROS_INFO("Data catch false");  //デバック用
+        // ROS_INFO("Data catch false");  //デバック用
         return false;
     }
 
-    ROS_INFO("Data catch success!");  //デバック用
+    // ROS_INFO("Data catch success!");  //デバック用
 
     double dx = waypoints_.point.x - roomba_.x;
     double dy = waypoints_.point.y - roomba_.y;
     double dist_to_goal = hypot(dx, dy);
 
-    ROS_INFO("calc dist_to_goal");  //デバック用
+    // ROS_INFO("calc dist_to_goal");  //デバック用
 
     if(dist_to_goal > goal_tolerance_)
         return true;
@@ -94,16 +95,16 @@ bool DWA::goal_check()
 }
 
 //Dynamic Windowの計算
-void DWA::calc_dynamic_window(double dt)
+void DWA::calc_dynamic_window()
 {
     //制御可能範囲(Vs)
     double Vs[] = {min_vel_, max_vel_, -max_yawrate_, max_yawrate_};
 
     //動的制御可能範囲(Vr)
-    double Vr[] = {roomba_.velocity - max_accel_ * dt,
-                   roomba_.velocity + max_accel_ * dt,
-                   roomba_.yawrate - max_yawaccel_ * dt,
-                   roomba_.yawrate + max_yawaccel_ * dt};
+    double Vr[] = {roomba_.velocity - max_accel_ * dt_,
+                   roomba_.velocity + max_accel_ * dt_,
+                   roomba_.yawrate - max_yawaccel_ * dt_,
+                   roomba_.yawrate + max_yawaccel_ * dt_};
 
     //Dynamic Window
     dw_.min_vel = std::max(Vs[0], Vr[0]);
@@ -113,25 +114,25 @@ void DWA::calc_dynamic_window(double dt)
 }
 
 //仮想ロボットを移動
-void DWA::move_image(State& imstate, double velocity, double yawrate, double dt)
+void DWA::move_image(State& imstate, double velocity, double yawrate)
 {
-    imstate.yaw += yawrate * dt;
-    imstate.x += velocity * dt * cos(imstate.yaw);
-    imstate.y += velocity * dt * sin(imstate.yaw);
+    imstate.yaw += yawrate * dt_;
+    imstate.x += velocity * dt_ * cos(imstate.yaw);
+    imstate.y += velocity * dt_ * sin(imstate.yaw);
     imstate.velocity = velocity;
     imstate.yawrate = yawrate;
 }
 
 //予測軌道を作成
-std::vector<State> DWA::predict_trajectory(double velocity, double yawrate, double dt)
+std::vector<State> DWA::predict_trajectory(double velocity, double yawrate)
 {
     std::vector<State> traj;  //軌道格納用の動的配列(サイズが可変)
     State imstate = {0.0, 0.0, 0.0, 0.0, 0.0};  //仮想ロボット
 
     //軌道を格納
-    for(double t=0.0; t<=predict_time_; t+=dt)
+    for(double t=0.0; t<=predict_time_; t+=dt_)
     {
-        move_image(imstate, velocity, yawrate, dt);
+        move_image(imstate, velocity, yawrate);
         traj.push_back(imstate);  //trajの末尾に挿入
     }
 
@@ -142,14 +143,14 @@ std::vector<State> DWA::predict_trajectory(double velocity, double yawrate, doub
 double DWA::calc_evaluation(std::vector<State>& traj)
 {
     double heading_value = weight_heading_ * calc_heading_eval(traj);
-    ROS_INFO("calc heading_value success!");  //デバック用
+    // ROS_INFO("calc heading_value success!");  //デバック用
     double distance_value = weight_distance_ * calc_distance_eval(traj);
-    ROS_INFO("calc distance_value success!");  //デバック用
+    // ROS_INFO("calc distance_value success!");  //デバック用
     double velocity_value = weight_velocity_ * calc_velocity_eval(traj);
-    ROS_INFO("calc velocity_value success!");  //デバック用
+    // ROS_INFO("calc velocity_value success!");  //デバック用
 
     double total_score = heading_value + distance_value + velocity_value;
-    ROS_INFO("calc total_score success!");  //デバック用
+    // ROS_INFO("calc total_score success!");  //デバック用
 
     return total_score;
 }
@@ -225,11 +226,11 @@ std::vector<double> DWA::calc_input()
     //input[0] = velocity, input[1] = yawrate;
     std::vector<double> input{0.0, 0.0};
     dt_ = 1.0 / hz_;
-    ROS_INFO("calc hz_");  //デバック用
+    // ROS_INFO("calc hz_");  //デバック用
 
     //ダイナミックウィンドウを計算
-    calc_dynamic_window(dt_);
-    ROS_INFO("calc dynamic_window success!");  //デバック用
+    calc_dynamic_window();
+    // ROS_INFO("calc dynamic_window success!");  //デバック用
 
     double one_score;  //計算したスコア格納用
     std::vector<double> score_yawrate;  //計算したスコア一次保存用
@@ -247,12 +248,14 @@ std::vector<double> DWA::calc_input()
     {
         for(double yawrate=dw_.min_yawrate; yawrate<=dw_.max_yawrate; yawrate+=yawrate_step_)
         {
-            std::vector<State> traj = predict_trajectory(velocity, yawrate, dt_);  //予測軌道を生成
-            ROS_INFO("create predict_trajectory success!");  //デバック用
+            std::vector<State> traj = predict_trajectory(velocity, yawrate);  //予測軌道を生成
+            // ROS_INFO("create predict_trajectory success!");  //デバック用
                                                              //
             one_score = calc_evaluation(traj);  //予測軌道に評価関数を適用
             score_yawrate.push_back(one_score);
-            ROS_INFO("calc_evaluation success!");  //デバック用
+            // ROS_INFO("velocity: %lf", velocity);  //デバック用
+            // ROS_INFO("yawrate : %lf", yawrate);  //デバック用
+            // ROS_INFO("score   : %lf", one_score);  //デバック用
             trajectories.push_back(traj);
 
             j++;
@@ -268,7 +271,7 @@ std::vector<double> DWA::calc_input()
         i++;
     }
 
-    ROS_INFO("calc all score finish! ");  //デバック用
+    // ROS_INFO("calc all score finish! ");  //デバック用
 
     //velocityの分割個数を格納
     vel_size = i;
@@ -323,13 +326,14 @@ std::vector<double> DWA::calc_input()
         }
     }
 
-    ROS_INFO("decide max_score!");  //デバック用
+    ROS_INFO("max_score: %lf", max_score);  //デバック用
 
     //最適な制御入力を格納
     input[0] = dw_.min_vel + vel_step_ * (max_vel_score_index + 1);
     input[1] = dw_.min_yawrate + yawrate_step_ * (max_yawrate_score_index + 1);
 
-    ROS_INFO("decide input!");  //デバック用
+    ROS_INFO("roomba_.velocity: %lf", input[0]);  //デバック用
+    ROS_INFO("roomba_.yawrate : %lf", input[1]);  //デバック用
 
     //現在速度の記録
     roomba_.velocity = input[0];

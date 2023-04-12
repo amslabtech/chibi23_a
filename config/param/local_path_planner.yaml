@@ -18,6 +18,7 @@ vel_step: 0.05
 yawrate_step: 0.1
 
 #時間[s]
+dt: 0.1  #微小時間
 predict_time: 3.0  #軌道予測時間[s]
 
 #機体サイズ(半径)[m]
