@@ -1,9 +1,11 @@
 <?xml version="1.0"?>
 <launch>
-    <!-- yaml file path -->
+    <!-- config file path -->
+    <arg name="rviz_settings" default="$(find chibi23_a)/config/rviz/local_path_planner.rviz"/>
     <arg name="local_path_planner_settings" default="$(find chibi23_a)/config/param/local_path_planner.yaml"/>
 
     <!-- node launch -->
+    <node pkg="rviz" type="rviz" name="rviz" args="-d $(arg rviz_settings)"/>
     <node pkg="chibi23_a" type="local_path_planner" name="local_path_planner" output="screen">
         <rosparam command="load" file="$(arg local_path_planner_settings)"/>
     </node>
