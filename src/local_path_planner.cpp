@@ -10,20 +10,20 @@ DWA::DWA():private_nh_("~")
     private_nh_.param("hz", hz_, {10});
     private_nh_.param("dt", dt_, {0.1});
     private_nh_.param("goal_tolerance", goal_tolerance_, {0.1});
-    private_nh_.param("max_vel", max_vel_, {0.2});
+    private_nh_.param("max_vel", max_vel_, {0.45});
     private_nh_.param("min_vel", min_vel_, {0.0});
-    private_nh_.param("max_yawrate", max_yawrate_, {0.8});
+    private_nh_.param("max_yawrate", max_yawrate_, {1.0});
     private_nh_.param("max_accel", max_accel_, {1000.0});
     private_nh_.param("max_yawaccel", max_yawaccel_, {1000.0});
-    private_nh_.param("predict_time", predict_time_, {1.0});
-    private_nh_.param("weight_heading", weight_heading_, {1.0});
-    private_nh_.param("weight_distance", weight_distance_, {1.0});
-    private_nh_.param("weight_velocity", weight_velocity_, {1.0});
-    private_nh_.param("search_range", search_range_, {5.0});
-    private_nh_.param("roomba_radius", roomba_radius_, {0.3});
-    private_nh_.param("radius_margin", radius_margin_, {0.2});
-    private_nh_.param("vel_step", vel_step_, {0.01});
-    private_nh_.param("yawrate_step", yawrate_step_, {0.01});
+    private_nh_.param("predict_time", predict_time_, {3.0});
+    private_nh_.param("weight_heading", weight_heading_, {0.85});
+    private_nh_.param("weight_distance", weight_distance_, {1.5});
+    private_nh_.param("weight_velocity", weight_velocity_, {0.6});
+    private_nh_.param("search_range", search_range_, {0.95});
+    private_nh_.param("roomba_radius", roomba_radius_, {0.17});
+    private_nh_.param("radius_margin", radius_margin_, {0.1});
+    private_nh_.param("vel_step", vel_step_, {0.05});
+    private_nh_.param("yawrate_step", yawrate_step_, {0.1});
     private_nh_.param("visualize_check", visualize_check_, {true});
    // odom_sub_ = nh_.subscribe("/roomba/odometry", 1, &DWA::odometry_callback, this);
     //laser_sub_ = nh_.subscribe("/scan", 1, &DWA::laser_callback, this);
@@ -111,6 +111,8 @@ void DWA::calc_dynamic_window()
     dw_.max_vel = std::min(Vs[1], Vr[1]);
     dw_.min_yawrate = std::max(Vs[2], Vr[2]);
     dw_.max_yawrate = std::min(Vs[3], Vr[3]);
+    // ROS_INFO("dw_.max_vel = %lf", dw_.max_vel);  //デバック用
+    // ROS_INFO("dw_.min_vel = %lf", dw_.min_vel);  //デバック用
 }
 
 //仮想ロボットを移動
@@ -241,7 +243,54 @@ std::vector<double> DWA::calc_input()
     int vel_size = 0;  //velocityの分割個数
     int yawrate_size = 0;  //yawrateの分割個数
 
+    //-----------スムージング関数の適用なし-----------
+
+    double max_score = -1000.0;  //評価値の最大値格納用
+    int max_score_index = 0;  //評価値が最大のときのインデックス格納用
+
     //並進速度と旋回速度のすべての組み合わせを評価
+    for(double velocity=dw_.min_vel; velocity<=dw_.max_vel; velocity+=vel_step_)
+    {
+        for(double yawrate=dw_.min_yawrate; yawrate<=dw_.max_yawrate; yawrate+=yawrate_step_)
+        {
+            std::vector<State> traj = predict_trajectory(velocity, yawrate);  //予測軌道を生成
+            // ROS_INFO("create predict_trajectory success!");  //デバック用
+                                                             //
+            one_score = calc_evaluation(traj);  //予測軌道に評価関数を適用
+            score_yawrate.push_back(one_score);
+            // ROS_INFO("velocity: %lf", velocity);  //デバック用
+            // ROS_INFO("yawrate : %lf", yawrate);  //デバック用
+            // ROS_INFO("score   : %lf", one_score);  //デバック用
+            trajectories.push_back(traj);
+
+            //評価値が一番大きいデータの探索
+            if(max_score < one_score)
+            {
+                max_score = one_score;
+                input[0] = velocity;
+                input[1] = yawrate;
+                max_score_index = j;
+                ROS_INFO("update max_score");  //デバック用
+            }
+
+            j++;
+        }
+
+        scores.push_back(score_yawrate);
+
+        //yawrateの分割個数を格納
+        if(i == 0)
+        {
+            yawrate_size = j;
+            ROS_INFO("yawrate_size = %d", yawrate_size);  //デバック用
+        }
+
+        i++;
+    }
+
+    //-----------スムージング関数の適用あり-----------
+
+    /*//並進速度と旋回速度のすべての組み合わせを評価
     for(double velocity=dw_.min_vel; velocity<=dw_.max_vel; velocity+=vel_step_)
     {
         for(double yawrate=dw_.min_yawrate; yawrate<=dw_.max_yawrate; yawrate+=yawrate_step_)
@@ -327,23 +376,6 @@ std::vector<double> DWA::calc_input()
 
     // ROS_INFO("get smoothing_score!");  //デバック用
 
-    /*//評価値が一番大きいデータの探索
-    int max_yawrate_score_index = 0;  //評価値が最大となる旋回速度のインデックス格納用
-
-    for(i=0; i<=vel_size-2; i++)
-    {
-        for(j=0; j<=yawrate_size-2; j++)
-        {
-            //最大値の更新
-            if(max_score < smoothing_score[i][j])
-            {
-                max_score = smoothing_score[i][j];
-                max_vel_score_index = i;
-                max_yawrate_score_index = j;
-            }
-        }
-    }*/
-
     ROS_INFO("max_score_index: %d", max_score_index);  //デバック用
     ROS_INFO("max_score: %lf", max_score);  //デバック用
 
@@ -352,14 +384,14 @@ std::vector<double> DWA::calc_input()
     ROS_INFO("max_yawrate_score_index: %d", max_yawrate_score_index);  //デバック用
 
     input[0] = dw_.min_vel + vel_step_ * (max_vel_score_index + 1);
-    input[1] = dw_.min_yawrate + yawrate_step_ * (max_yawrate_score_index + 1);
-
-    ROS_INFO("roomba_.velocity: %lf", input[0]);  //デバック用
-    ROS_INFO("roomba_.yawrate : %lf", input[1]);  //デバック用
+    input[1] = dw_.min_yawrate + yawrate_step_ * (max_yawrate_score_index + 1);*/
 
     //現在速度の記録
     roomba_.velocity = input[0];
     roomba_.yawrate = input[1];
+
+    ROS_INFO("roomba_.velocity: %lf", roomba_.velocity);  //デバック用
+    ROS_INFO("roomba_.yawrate : %lf", roomba_.yawrate);  //デバック用
 
     //パスを可視化して適切なパスが選択できているかを評価
     if(visualize_check_ == true)
@@ -375,27 +407,11 @@ std::vector<double> DWA::calc_input()
             }
             else
                 visualize_traj(trajectories[i], pub_predict_path_, now);
+            // visualize_traj(trajectories[i], pub_predict_path_, now);  //predict_pathだけ確認する用
 
-            ROS_INFO("visualize_traj success!");  //デバック用
+            // ROS_INFO("visualize_traj success!");  //デバック用
         }
     }
-    /*if(visualize_check_ = true)
-    {
-        ros::Time now = ros::Time::now();
-
-        for(i=0; i<=vel_size-2; i++)
-        {
-            for(j=0; j<=yawrate_size-2; j++)
-            {
-                if((i ==  max_vel_score_index) && (j == max_yawrate_score_index))
-                    visualize_traj(trajectories[i*j+j], pub_optimal_path_, now);
-                else
-                    visualize_traj(trajectories[i*j+j], pub_predict_path_, now);
-            }
-        }
-
-        ROS_INFO("visualize_traj success!");  //デバック用
-    }*/
 
     return input;
 }
@@ -441,6 +457,7 @@ void DWA::process()
     while(ros::ok())
     {
         if(goal_check())
+        // if(true)  //他のデータをサブスクライブせずにパスが可視化できるか確認するとき用
         {
             ROS_INFO("calc_input start");  //デバック用
             std::vector<double> input = calc_input();
