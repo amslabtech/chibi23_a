@@ -29,6 +29,7 @@ struct CompareNode {
 class AstarPath
 {
   public:
+    AstarPath();
     vector<pair<int, int> > a_star(vector<vector<int>> &map_grid, pair<int, int> start, pair<int, int> goal);
     vector<pair<int, int> > path_for_multi_goal();
     vector<vector<int>> map_grid;
@@ -39,7 +40,7 @@ class AstarPath
 
   private:
     void map_callback();
-    bool isValid();
+    bool isValid(int x, int y, int rows, int cols);
     double heuristic(int x1, int y1, int x2, int y2);
     void map_callback(const nav_msgs::OccupancyGrid::ConstPtr &msg);
 

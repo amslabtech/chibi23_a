@@ -131,7 +131,7 @@ int main(int argc, char **argv) {
     ros::init(argc, argv, "global_path_planner");           //node name "Global_path_planner"
 		AstarPath astar;
 		astar.start = {0, 0}; // スタート地点を設定
-		astar.goals = {3, 4}; // 中継地点を含む複数のゴールを設定
+		astar.goals = { {3, 4} }; // 中継地点を含む複数のゴールを設定
 		astar.process();
 		return 0;
 }
