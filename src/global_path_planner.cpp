@@ -47,7 +47,7 @@ double AstarPath::heuristic(int x1, int y1, int x2, int y2) {
 		return sqrt(pow(x1 - x2, 2) + pow(y1 - y2, 2));
 }
 
-vector<pair<int, int>> AstarPath::a_star() {
+vector<pair<int, int>> AstarPath::a_star(vector<vector<int, int>> map_grid, pair<int, int> start, pair<int, int> goal) {
 		int rows = map_grid.size();
         int cols = map_grid[0].size();
 
@@ -58,8 +58,8 @@ vector<pair<int, int>> AstarPath::a_star() {
 
 		printf("came_from=%d, %d\n", came_from[0][0].first, came_from[0][0].second); // デバッグ用
 
-		priority_queue<Node, vector<Node>, NodeComparator> open_set;
-		open_set.push(Node(start.first, start.second, 0, heuristic(start.first, start.second, goals.first, goals.second)));
+		priority_queue<Node, vector<Node>, CompareNode> open_set;
+		open_set.push(Node(start.first, start.second, 0, heuristic(start.first, start.second, goal.first, goal.second)));
 
 		while (!open_set.empty()) {
 			printf("open_set=%d, %d, %f, %f, %f\n", open_set.top().x, open_set.top().y, open_set.top().f, open_set.top().g, open_set.top().h); // デバッグ用
