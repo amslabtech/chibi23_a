@@ -29,12 +29,12 @@ struct CompareNode {
 class AstarPath
 {
   public:
-    vector<pair<int, int> > a_star(vector<vector<int> map_grid, pair<int, int> start, pair<int, int> goal);
+    vector<pair<int, int> > a_star(vector<vector<int>> &map_grid, pair<int, int> start, pair<int, int> goal);
     vector<pair<int, int> > path_for_multi_goal();
-    vector<std::vector<int,>> map_grid;
+    vector<vector<int>> map_grid;
     pair<int, int> start;
     vector<pair<int, int>> goals;
-    vector<std::vector<int>> global_path;
+    vector<vector<int>> global_path;
     void process();
 
   private:
