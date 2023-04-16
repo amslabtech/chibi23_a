@@ -47,7 +47,7 @@ double AstarPath::heuristic(int x1, int y1, int x2, int y2) {
 		return sqrt(pow(x1 - x2, 2) + pow(y1 - y2, 2));
 }
 
-vector<pair<int, int>> AstarPath::a_star(vector<vector<int> map_grid, pair<int, int> start, pair<int, int> goal) {
+vector<pair<int, int>> AstarPath::a_star(vector<vector<int>> &map_grid, pair<int, int> start, pair<int, int> goal) {
 		int rows = map_grid.size();
         int cols = map_grid[0].size();
 
