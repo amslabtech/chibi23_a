@@ -30,6 +30,7 @@ class AstarPath
 {
   public:
     vector<pair<int, int> > a_star();
+    vector<pair<int, int> > path_for_multi_goal();
 
   private:
     void map_callback();
@@ -38,7 +39,7 @@ class AstarPath
     void map_callback(const nav_msgs::OccuancyGrid::ConstPtr &msg);
     vector<std::vector<int>> map_grid;
     pair<int, int> start;
-    pair<int, int> goal;
+    vector<pair<int, int>> goals;
     vector<std::vector<int>> global_path;
 
 
@@ -55,5 +56,6 @@ class AstarPath
     nav_msgs::Path global_path;             //マップ全体でのパス
     nav_msgs::Path checkpoint_path;               //チェックポイントまでのパス
     geometry_msgs::PoseStamped goal_point;
+};
 
 #endif
