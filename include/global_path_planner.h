@@ -31,17 +31,17 @@ class AstarPath
   public:
     vector<pair<int, int> > a_star();
     vector<pair<int, int> > path_for_multi_goal();
-
-  private:
-    void map_callback();
-    bool is_valid();
-    double heuristic();
-    void map_callback(const nav_msgs::OccuancyGrid::ConstPtr &msg);
     vector<std::vector<int>> map_grid;
     pair<int, int> start;
     vector<pair<int, int>> goals;
     vector<std::vector<int>> global_path;
+    void process();
 
+  private:
+    void map_callback();
+    bool isValid();
+    double heuristic(int x1, int y1, int x2, int y2);
+    void map_callback(const nav_msgs::OccuancyGrid::ConstPtr &msg);
 
     int hz;
 
@@ -53,7 +53,7 @@ class AstarPath
     ros::Publisher pub_goal;
 
     nav_msgs::OccupancyGrid the_map;         //house map
-    nav_msgs::Path global_path;             //マップ全体でのパス
+    //nav_msgs::Path global_path;             //マップ全体でのパス
     nav_msgs::Path checkpoint_path;               //チェックポイントまでのパス
     geometry_msgs::PoseStamped goal_point;
 };
