@@ -56,5 +56,6 @@ class AstarPath
     nav_msgs::Path global_path;             //マップ全体でのパス
     nav_msgs::Path checkpoint_path;               //チェックポイントまでのパス
     geometry_msgs::PoseStamped goal_point;
+};
 
 #endif
