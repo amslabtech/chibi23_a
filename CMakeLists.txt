@@ -10,9 +10,11 @@ project(chibi23_a)
 find_package(catkin REQUIRED COMPONENTS
   roomba_500driver_meiji
   roscpp
+  geometry_msgs
   nav_msgs
   sensor_msgs
   tf
+  tf2
 )
 
 ## System dependencies are found with CMake's conventions
