@@ -48,7 +48,8 @@ double AstarPath::heuristic(int x1, int y1, int x2, int y2) {
 }
 
 vector<pair<int, int>> AstarPath::a_star() {
-		int rows = grid.size(), cols = grid[0].size();
+		int rows = map_grid.size();
+        int cols = map_grid[0].size();
 
 		printf("rows=%d, cols=%d\n", rows, cols); // デバッグ用
 
@@ -58,7 +59,7 @@ vector<pair<int, int>> AstarPath::a_star() {
 		printf("came_from=%d, %d\n", came_from[0][0].first, came_from[0][0].second); // デバッグ用
 
 		priority_queue<Node, vector<Node>, NodeComparator> open_set;
-		open_set.push(Node(start.first, start.second, 0, heuristic(start.first, start.second, goal.first, goal.second)));
+		open_set.push(Node(start.first, start.second, 0, heuristic(start.first, start.second, goals.first, goals.second)));
 
 		while (!open_set.empty()) {
 			printf("open_set=%d, %d, %f, %f, %f\n", open_set.top().x, open_set.top().y, open_set.top().f, open_set.top().g, open_set.top().h); // デバッグ用
@@ -86,7 +87,7 @@ vector<pair<int, int>> AstarPath::a_star() {
 				for (auto &neighbor : neighbors) {
 						int nx = x + neighbor.first, ny = y + neighbor.second;
 
-						if (isValid(nx, ny, rows, cols) && grid[nx][ny] == 0 && !visited[nx][ny]) {
+						if (isValid(nx, ny, rows, cols) && map_grid[nx][ny] == 0 && !visited[nx][ny]) {
 								double tentative_g = current.g + 1;
 								double h = heuristic(nx, ny, goal.first, goal.second);
 								open_set.push(Node(nx, ny, tentative_g, h));
@@ -103,7 +104,7 @@ vector<pair<int, int>> AstarPath::path_for_multi_goal() {
 		vector<pair<int, int>> path;
 		pair<int, int> current = start;
 		for (auto &goal : goals) {
-				auto p = a_star(grid, current, goal);
+				auto p = a_star(map_grid, current, goal);
 				path.insert(path.end(), p.begin(), p.end());
 				current = goal;
 		}
@@ -115,7 +116,7 @@ void AstarPath::process()
 	ros::Rate loop_rate(hz);
     while(ros::ok())
     {
-        if(!global_path.empty() && !grid.empty())
+        if(!global_path.empty() && !map_grid.empty())
         {
 					global_path = path_for_multi_goal();
 					pub_path.publish(global_path);
