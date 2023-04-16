@@ -98,6 +98,18 @@ vector<pair<int, int>> AstarPath::a_star() {
 		return {};  // 経路が見つからない場合、空のベクタを返す
 }
 
+// 複数のゴールを設定した場合の経路計画
+vector<pair<int, int>> AstarPath::path_for_multi_goal() {
+		vector<pair<int, int>> path;
+		pair<int, int> current = start;
+		for (auto &goal : goals) {
+				auto p = a_star(grid, current, goal);
+				path.insert(path.end(), p.begin(), p.end());
+				current = goal;
+		}
+		return path;
+}
+
 void AstarPath::process()
 {
 	ros::Rate loop_rate(hz);
@@ -105,7 +117,7 @@ void AstarPath::process()
     {
         if(!global_path.empty() && !grid.empty())
         {
-					global_path = a_star();
+					global_path = path_for_multi_goal();
 					pub_path.publish(global_path);
         }
 
@@ -114,10 +126,11 @@ void AstarPath::process()
     }
 }
 
-int main() {
+int main(int argc, char **argv) {
+    ros::init(argc, argv, "global_path_planner");           //node name "Global_path_planner"
 		AstarPath astar;
-		astar.start = {0, 0};
-		astar.goal = {3, 4};
+		astar.start = {0, 0}; // スタート地点を設定
+		astar.goals = {3, 4}; // 中継地点を含む複数のゴールを設定
 		astar.process();
 		return 0;
 }
