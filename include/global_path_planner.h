@@ -30,33 +30,32 @@ class AstarPath
 {
   public:
     AstarPath();
-    vector<pair<int, int> > a_star(vector<vector<int>> &map_grid, pair<int, int> start, pair<int, int> goal);
-    vector<pair<int, int> > path_for_multi_goal();
-    vector<vector<int>> map_grid;
-    pair<int, int> start;
-    vector<pair<int, int>> goals;
-    vector<vector<int>> global_path;
     void process();
 
   private:
-    void map_callback();
-    bool isValid(int x, int y, int rows, int cols);
-    double heuristic(int x1, int y1, int x2, int y2);
-    void map_callback(const nav_msgs::OccupancyGrid::ConstPtr &msg);
+    vector<pair<int, int> > a_star(vector<vector<int>> &map_grid, pair<int, int> start, pair<int, int> goal);
+    vector<pair<int, int> > path_for_multi_goal();
+    bool                    isValid(int x, int y, int rows, int cols);
+    double                  heuristic(int x1, int y1, int x2, int y2);
+    void                    map_callback(const nav_msgs::OccupancyGrid::ConstPtr &msg);
+    
+    vector<vector<int>>    map_grid;
+    pair<int, int>         start;
+    vector<pair<int, int>> goals;
+    pair<int, int>         oringin; // マップの原点
+    vector<vector<int>>    global_path;
 
     int hz;
 
     ros::NodeHandle nh;
     ros::NodeHandle private_nh;
     ros::Subscriber sub_map;
-    ros::Publisher pub_map;
-    ros::Publisher pub_path;
-    ros::Publisher pub_goal;
+    ros::Publisher  pub_map;
+    ros::Publisher  pub_path;
+    ros::Publisher  pub_goal;
 
-    nav_msgs::OccupancyGrid the_map;         //house map
-    //nav_msgs::Path global_path;             //マップ全体でのパス
-    nav_msgs::Path checkpoint_path;               //チェックポイントまでのパス
-    geometry_msgs::PoseStamped goal_point;
+    nav_msgs::OccupancyGrid    the_map; //house map
+    nav_msgs::Path             global_path_msgs; //マップ全体でのパス
 };
 
 #endif
