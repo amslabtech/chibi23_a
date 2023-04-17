@@ -1,0 +1,9 @@
+<?xml version="1.0"?>
+
+<launch>
+    <!-- node launch-->
+    <node pkg="obstacle_detector" type="obstacle_detector" name="obstacle_detector" output="screen"/>
+    <node pkg="urg_node" type="urg_node" name="urg_node" args="_ip_address:=192.168.1.221"/>
+    <node pkg="rviz" type="rviz" name="rviz" output="screen"/>
+</launch>
+
