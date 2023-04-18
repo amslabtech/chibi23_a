@@ -183,6 +183,7 @@ double DWA::calc_heading_eval(std::vector<State>& traj)
 double DWA::calc_distance_eval(std::vector<State>& traj)
 {
     double dist_to_ob = 0.0;  //障害物までの距離
+    double min_dist_to_ob = search_range_;  //パス上の最も近い障害物までの距離
     //roombaの軌道上に障害物がないか探索
     for(auto& state : traj)
     {
@@ -196,10 +197,14 @@ double DWA::calc_distance_eval(std::vector<State>& traj)
             //distanceの評価値を計算
             if(dist_to_ob <= roomba_radius_ + radius_margin_)
                 return -100.0;  //壁に衝突したパスにはマイナス値を返す
+
+            //障害物までの距離の最小値を更新
+            if(min_dist_to_ob > dist_to_ob)
+                min_dist_to_ob = dist_to_ob;
         }
     }
 
-    return dist_to_ob / search_range_;  //正規化
+    return min_dist_to_ob / search_range_;  //正規化
 }
 
 //velocity(3項目)の評価関数を計算する
