@@ -140,7 +140,7 @@ void AstarPath::process()
 	ros::Rate loop_rate(hz);
     while(ros::ok())
     {
-			if(!global_path.empty() && !map_grid.empty() && map_check)
+			if(global_path.empty() && !map_grid.empty() && map_check)
 			{
 				global_path = path_for_multi_goal();
 				assign_global_path_msgs();
