@@ -6,6 +6,19 @@ AstarPath::AstarPath():private_nh("~")
     private_nh.param("map_check",map_check,{false});
     sub_map = nh.subscribe("/map",10,&AstarPath::map_callback,this);    //"/map"からマップをもらい、callback関数に送る
     pub_path = nh.advertise<nav_msgs::Path>("/global_path",1);
+
+		// パラメータの読み込み 
+		// FIXME: 関数に処理を分割したい
+		XmlRpc::XmlRpcValue xml_start;
+		private_nh.getParam("/param/start_start", xml_start);
+		start_position.first = xml_start[0];
+		start_position.second = xml_start[1];
+		XmlRpc::XmlRpcValue xml_goals;
+		private_nh.getParam("/param/xml_goals", xml_goals);
+		for( int i=0; i<xml_goals.size(); ++i ) {
+					goal_positions[i].first = xml_goals[i][0];
+					goal_positions[i].second = xml_goals[i][1];
+		}
 }
 
 void AstarPath::map_callback(const nav_msgs::OccupancyGrid::ConstPtr &msg)
