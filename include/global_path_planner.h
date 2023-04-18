@@ -32,18 +32,22 @@ class AstarPath
     AstarPath();
     void process();
 
+    pair<int, int>         start;
+    vector<pair<int, int>> goals;
+
   private:
     vector<pair<int, int> > a_star(vector<vector<int>> &map_grid, pair<int, int> start, pair<int, int> goal);
     vector<pair<int, int> > path_for_multi_goal();
     bool                    isValid(int x, int y, int rows, int cols);
     double                  heuristic(int x1, int y1, int x2, int y2);
     void                    map_callback(const nav_msgs::OccupancyGrid::ConstPtr &msg);
+    void                    assign_global_path_msgs();
     
     vector<vector<int>>    map_grid;
-    pair<int, int>         start;
-    vector<pair<int, int>> goals;
-    pair<int, int>         oringin; // マップの原点
     vector<vector<int>>    global_path;
+    pair<int, int>         origin; // マップの原点
+    bool                   path_check; // パスが見つかったかどうか
+    bool                   map_check; // マップが見つかったかどうか
 
     int hz;
 
@@ -53,7 +57,6 @@ class AstarPath
     ros::Publisher  pub_map;
     ros::Publisher  pub_path;
     ros::Publisher  pub_goal;
-
     nav_msgs::OccupancyGrid    the_map; //house map
     nav_msgs::Path             global_path_msgs; //マップ全体でのパス
 };

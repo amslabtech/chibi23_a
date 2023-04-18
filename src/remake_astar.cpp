@@ -99,7 +99,8 @@ vector<pair<int, int>> AstarPath::a_star(vector<vector<int>> &map_grid, pair<int
 }
 
 // 複数のゴールを設定した場合の経路計画
-vector<pair<int, int>> AstarPath::path_for_multi_goal() {
+vector<pair<int, int>> AstarPath::path_for_multi_goal() 
+{
 		vector<pair<int, int>> path;
 		pair<int, int> current = start;
 		for (auto &goal : goals) {
