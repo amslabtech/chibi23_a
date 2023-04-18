@@ -156,8 +156,8 @@ void AstarPath::process()
 int main(int argc, char **argv) {
     ros::init(argc, argv, "global_path_planner");           //node name "Global_path_planner"
 		AstarPath astar;
-		astar.start = {0, 0}; // スタート地点を設定
-		astar.goals = { {3, 4} }; // 中継地点を含む複数のゴールを設定
+		astar.start = {2000,2000}; // スタート地点を設定
+		astar.goals = { {2160,2005},{2320,2010},{2320,2290},{2115,2287},{2000,2285},{1660,2280},{1660,1990},{1830,1995},{2000,2000} }; // 中継地点を含む複数のゴールを設定
 		astar.process();
 		return 0;
 }
