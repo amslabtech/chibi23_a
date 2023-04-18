@@ -52,24 +52,19 @@ vector<pair<int, int>> AstarPath::a_star(vector<vector<int>> &map_grid, pair<int
 	int rows = map_grid.size();
 	int cols = map_grid[0].size();
 
-	printf("rows=%d, cols=%d\n", rows, cols); // デバッグ用
 
 	vector<vector<bool>> visited(rows, vector<bool>(cols, false));
 	vector<vector<pair<int, int>>> came_from(rows, vector<pair<int, int>>(cols, {-1, -1}));
-
-	printf("came_from=%d, %d\n", came_from[0][0].first, came_from[0][0].second); // デバッグ用
 
 	priority_queue<Node, vector<Node>, CompareNode> open_set;
 	open_set.push(Node(start.first, start.second, 0, heuristic(start.first, start.second, goal.first, goal.second)));
 
 	while (!open_set.empty()) {
-		printf("open_set=%d, %d, %f, %f, %f\n", open_set.top().x, open_set.top().y, open_set.top().f, open_set.top().g, open_set.top().h); // デバッグ用
 
 		Node current = open_set.top(); // 最後の要素を取り出す
 		open_set.pop(); // 取り出した要素を削除する
 		int x = current.x, y = current.y;
 
-		printf("x=%d, y=%d\n", x, y); // デバッグ用
 
 		if (x == goal.first && y == goal.second) {
 			vector<pair<int, int>> path;
@@ -118,6 +113,7 @@ void AstarPath::assign_global_path_msgs()
 {
 	for(auto &p : global_path)
 	{
+	  printf("x=%lf, y=%lf, \n",( p.first - row_count/2 )* resolution,( p.second - col_count /2) * resolution); // デバッグ用
 		geometry_msgs::PoseStamped global_path_point;
 		global_path_point.pose.position.x = (p.first - map_row_length / 2) * map_resolution;
 		global_path_point.pose.position.y = (p.second - map_col_length / 2) * map_resolution;
@@ -126,10 +122,10 @@ void AstarPath::assign_global_path_msgs()
 		global_path_point.pose.orientation.y = 0;
 		global_path_point.pose.orientation.z = 0;
 		global_path_point.pose.orientation.w = 1;
-		global_path_point.header.frame_id = "map";
-		global_path_point.header.stamp = ros::Time::now();
 		global_path_msgs.poses.push_back(global_path_point);
 	}
+		global_path_msgs.header.frame_id = "map";
+		global_path_msgs.header.stamp = ros::Time::now();
 }
 
 void AstarPath::convert_map_position_to_node_index()
