@@ -18,16 +18,17 @@ void AstarPath::map_callback(const nav_msgs::OccupancyGrid::ConstPtr &msg)
     else
     {
         the_map = *msg;
-        int row_count = the_map.info.height;          //row_count = 4000
-        int col_count = the_map.info.width;           //col_count = 4000
-        map_grid = vector<vector<int>>(row_count,vector<int>(col_count,0));
+				map_resolution = the_map.info.resolution;      // マップの解像度を設定する
+        map_row_length = the_map.info.height;          //row_count = 4000
+        map_col_length = the_map.info.width;           //col_count = 4000
+        map_grid = vector<vector<int>>(map_row_length,vector<int>(map_col_length,0));
 
         //change 1D the_map to 2D
-        for(int i=0; i<row_count; i++)
+        for(int i=0; i<map_row_length; i++)
         {
-            for(int j=0; j<col_count; j++)
+            for(int j=0; j<map_col_length; j++)
             {
-                map_grid[i][j] = the_map.data[i+j*row_count];
+                map_grid[i][j] = the_map.data[i+j*map_row_length];
             }
         }
         // origin mean point which is edge of left down
@@ -115,15 +116,11 @@ vector<pair<int, int>> AstarPath::path_for_multi_goal() {
 // - globalpath.first -> global_path_msgs.pose.position.x, global_path.second -> global_path_msgs.pose.position.y
 void AstarPath::assign_global_path_msgs()
 {
-	float resolution = the_map.info.resolution; // 多分マップの解像度を設定する
-	int row_count = the_map.info.height;          //row_count = 4000
-	int col_count = the_map.info.width;           //col_count = 4000
-
 	for(auto &p : global_path)
 	{
 		geometry_msgs::PoseStamped global_path_point;
-		global_path_point.pose.position.x = (p.first - row_count / 2) * resolution;
-		global_path_point.pose.position.y = (p.second - col_count / 2) * resolution;
+		global_path_point.pose.position.x = (p.first - map_row_length / 2) * map_resolution;
+		global_path_point.pose.position.y = (p.second - map_col_length / 2) * map_resolution;
 		global_path_point.pose.position.z = 0;
 		global_path_point.pose.orientation.x = 0;
 		global_path_point.pose.orientation.y = 0;
@@ -132,6 +129,17 @@ void AstarPath::assign_global_path_msgs()
 		global_path_point.header.frame_id = "map";
 		global_path_point.header.stamp = ros::Time::now();
 		global_path_msgs.poses.push_back(global_path_point);
+	}
+}
+
+void AstarPath::convert_map_position_to_node_index()
+{
+	start.first = (start_position.first / map_resolution) + map_row_length / 2;
+	start.second = (start_position.second / map_resolution) + map_col_length / 2;
+
+	for(auto &goal : goal_positions)
+	{
+		goals.push_back({ (goal.first / map_resolution) + map_row_length / 2, (goal.second / map_resolution) + map_col_length / 2 });
 	}
 }
 
@@ -156,11 +164,7 @@ void AstarPath::process()
 int main(int argc, char **argv) {
     ros::init(argc, argv, "global_path_planner");           //node name "Global_path_planner"
 		AstarPath astar;
-		astar.start = {2000,2000}; // スタート地点を設定
-		astar.goals = { {2160,2005},{2320,2010},{2320,2290},{2115,2287},{2000,2285},{1660,2280},{1660,1990},{1830,1995},{2000,2000} }; // 中継地点を含む複数のゴールを設定
+		aster.convert_map_position_to_node_index();
 		astar.process();
 		return 0;
 }
-
-
-

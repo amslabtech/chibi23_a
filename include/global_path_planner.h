@@ -31,9 +31,7 @@ class AstarPath
   public:
     AstarPath();
     void process();
-
-    pair<int, int>         start;
-    vector<pair<int, int>> goals;
+    void convert_map_position_to_node_index();
 
   private:
     vector<pair<int, int> > a_star(vector<vector<int>> &map_grid, pair<int, int> start, pair<int, int> goal);
@@ -43,12 +41,18 @@ class AstarPath
     void                    map_callback(const nav_msgs::OccupancyGrid::ConstPtr &msg);
     void                    assign_global_path_msgs();
     
+    int hz;
     vector<vector<int>>    map_grid;
     vector<pair<int, int>> global_path;
     pair<int, int>         origin; // マップの原点
-    bool                   map_check; // マップが見つかったかどうか
-
-    int hz;
+    bool                   map_check;
+    pair<int, int>         start_position;
+    vector<pair<int, int>> goal_positions;
+    pair<int, int>         start;
+    vector<pair<int, int>> goals;
+    float                  map_resolution;
+    int                    map_row_length;
+    int                    map_col_length;
 
     ros::NodeHandle            nh;
     ros::NodeHandle            private_nh;
@@ -56,8 +60,8 @@ class AstarPath
     ros::Publisher             pub_map;
     ros::Publisher             pub_path;
     ros::Publisher             pub_goal;
-    nav_msgs::OccupancyGrid    the_map; //house map
-    nav_msgs::Path             global_path_msgs; //マップ全体でのパス
+    nav_msgs::OccupancyGrid    the_map;
+    nav_msgs::Path             global_path_msgs;
 };
 
 #endif
