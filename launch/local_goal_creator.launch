@@ -1,0 +1,13 @@
+<?xml version="1.0"?>
+<launch>
+    <!-- config file path -->
+    <arg name="rviz_settings" default="$(find chibi23_a)/config/rviz/local_goal_creator.rviz"/>
+    <arg name="local_goal_creator_settings" default="$(find chibi23_a)/config/param/local_goal_creator.yaml"/>
+
+    <!-- node launch -->
+    <node pkg="rviz" type="rviz" name="rviz" args="-d $(arg rviz_settings)"/>
+    <node pkg="chibi23_a" type="local_goal_creator" name="local_goal_creator" output="screen">
+        <rosparam command="load" file="$(arg local_goal_creator_settings)"/>
+    </node>
+    <node pkg="rosbag" type="play" name="play" args="$(env HOME)/bag/local_goal_creator_debug.bag --clock"/>
+</launch>
