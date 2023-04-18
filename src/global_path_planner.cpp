@@ -115,12 +115,14 @@ vector<pair<int, int>> AstarPath::path_for_multi_goal() {
 void AstarPath::assign_global_path_msgs()
 {
 	float resolution = the_map.info.resolution; // 多分マップの解像度を設定する
+	int row_count = the_map.info.height;          //row_count = 4000
+	int col_count = the_map.info.width;           //col_count = 4000
 
 	for(auto &p : global_path)
 	{
 		geometry_msgs::PoseStamped global_path_point;
-		global_path_point.pose.position.x = (p.first - row / 2) * resolution;
-		global_path_point.pose.position.y = (p.second - col / 2) * resolution;
+		global_path_point.pose.position.x = (p.first - row_count / 2) * resolution;
+		global_path_point.pose.position.y = (p.second - col_count / 2) * resolution;
 		global_path_point.pose.position.z = 0;
 		global_path_point.pose.orientation.x = 0;
 		global_path_point.pose.orientation.y = 0;

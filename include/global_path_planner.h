@@ -44,7 +44,7 @@ class AstarPath
     void                    assign_global_path_msgs();
     
     vector<vector<int>>    map_grid;
-    vector<vector<int>>    global_path;
+    vector<pair<int, int>> global_path;
     pair<int, int>         origin; // マップの原点
     bool                   path_check; // パスが見つかったかどうか
     bool                   map_check; // マップが見つかったかどうか
