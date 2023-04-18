@@ -46,7 +46,6 @@ class AstarPath
     vector<vector<int>>    map_grid;
     vector<pair<int, int>> global_path;
     pair<int, int>         origin; // マップの原点
-    bool                   path_check; // パスが見つかったかどうか
     bool                   map_check; // マップが見つかったかどうか
 
     int hz;

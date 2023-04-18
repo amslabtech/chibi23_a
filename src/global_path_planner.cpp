@@ -3,7 +3,6 @@
 AstarPath::AstarPath():private_nh("~")
 {
     private_nh.param("hz",hz,{10});                                     //実行した後に、hzの値を変えることができる。　{}はデフォルト値
-    private_nh.param("path_check",path_check,{false});
     sub_map = nh.subscribe("/map",10,&AstarPath::map_callback,this);    //"/map"からマップをもらい、callback関数に送る
     pub_path = nh.advertise<nav_msgs::Path>("/path",1);
 }
@@ -33,6 +32,7 @@ void AstarPath::map_callback(const nav_msgs::OccupancyGrid::ConstPtr &msg)
         // origin mean point which is edge of left down
         origin.first = the_map.info.origin.position.x;      //origin.first = -100
         origin.second = the_map.info.origin.position.y;      //origin.first = -100
+				map_check = true;
     }
 }
 
@@ -139,15 +139,15 @@ void AstarPath::process()
 	ros::Rate loop_rate(hz);
     while(ros::ok())
     {
-        if(!global_path.empty() && !map_grid.empty())
-        {
-			global_path = path_for_multi_goal();
-			assign_global_path_msgs();
-			pub_path.publish(global_path_msgs);
-        }
+			if(!global_path.empty() && !map_grid.empty() && map_check)
+			{
+				global_path = path_for_multi_goal();
+				assign_global_path_msgs();
+				pub_path.publish(global_path_msgs);
+			}
 
-        ros::spinOnce();
-        loop_rate.sleep();
+			ros::spinOnce();
+			loop_rate.sleep();
     }
 }
 
