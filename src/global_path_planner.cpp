@@ -113,7 +113,7 @@ void AstarPath::assign_global_path_msgs()
 {
 	for(auto &p : global_path)
 	{
-	  printf("x=%lf, y=%lf, \n",( p.first - row_count/2 )* resolution,( p.second - col_count /2) * resolution); // デバッグ用
+	  printf("x=%lf, y=%lf, \n",( p.first - map_row_length/2 )* map_resolution,( p.second - map_col_length /2) * map_resolution); // デバッグ用a
 		geometry_msgs::PoseStamped global_path_point;
 		global_path_point.pose.position.x = (p.first - map_row_length / 2) * map_resolution;
 		global_path_point.pose.position.y = (p.second - map_col_length / 2) * map_resolution;
@@ -160,7 +160,7 @@ void AstarPath::process()
 int main(int argc, char **argv) {
     ros::init(argc, argv, "global_path_planner");           //node name "Global_path_planner"
 		AstarPath astar;
-		aster.convert_map_position_to_node_index();
+		astar.convert_map_position_to_node_index();
 		astar.process();
 		return 0;
 }
