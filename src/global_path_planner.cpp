@@ -3,6 +3,7 @@
 AstarPath::AstarPath():private_nh("~")
 {
     private_nh.param("hz",hz,{10});                                     //実行した後に、hzの値を変えることができる。　{}はデフォルト値
+    private_nh.param("map_check",map_check,{false});
     sub_map = nh.subscribe("/map",10,&AstarPath::map_callback,this);    //"/map"からマップをもらい、callback関数に送る
     pub_path = nh.advertise<nav_msgs::Path>("/path",1);
 }
