@@ -25,12 +25,10 @@ DWA::DWA():private_nh_("~")
     private_nh_.param("vel_step", vel_step_, {0.05});
     private_nh_.param("yawrate_step", yawrate_step_, {0.1});
     private_nh_.param("visualize_check", visualize_check_, {true});
-   // odom_sub_ = nh_.subscribe("/roomba/odometry", 1, &DWA::odometry_callback, this);
-    //laser_sub_ = nh_.subscribe("/scan", 1, &DWA::laser_callback, this);
 
     //Subscriber
-    sub_waypoints_ = nh_.subscribe("/local_goal", 1, &DWA::waypoints_callback, this);  //"/waypoints"のところは名前変える必要あるかも？
-    sub_ob_position_ = nh_.subscribe("/local_map/obstacle", 1, &DWA::ob_position_callback, this);  //"/local_map/obstacle"のところは名前変える必要あるかも？
+    sub_local_goal_ = nh_.subscribe("/local_goal", 1, &DWA::local_goal_callback, this);
+    sub_ob_position_ = nh_.subscribe("/local_map/obstacle", 1, &DWA::ob_position_callback, this);
 
     //Publisher
     pub_cmd_vel_ = nh_.advertise<roomba_500driver_meiji::RoombaCtrl>("/roomba/control", 1);
@@ -38,27 +36,27 @@ DWA::DWA():private_nh_("~")
     pub_optimal_path_ = nh_.advertise<nav_msgs::Path>("/optimal_local_path", 1);
 }
 
-//waypointsのコールバック関数
-void DWA::waypoints_callback(const geometry_msgs::PointStamped::ConstPtr& msg)
+//local_goalのコールバック関数
+void DWA::local_goal_callback(const geometry_msgs::PointStamped::ConstPtr& msg)
 {
     geometry_msgs::TransformStamped transform;
-    // ROS_INFO("catch waypoints_data");  //デバック用
+    // ROS_INFO("catch local_goal_data");  //デバック用
 
-    //waypoints_の座標系をbase_linkに合わせる
+    //local_goal_の座標系をbase_linkに合わせる
     try
     {
         transform = tf_buffer_.lookupTransform("base_link", "map", ros::Time(0));
-        flag_waypoints_ = true;
+        flag_local_goal_ = true;
     }
     catch(tf2::TransformException& ex)
     {
         ROS_WARN("%s", ex.what());
-        flag_waypoints_ = false;
-        // ROS_INFO("No waypoints_data");  //デバック用
+        flag_local_goal_ = false;
+        // ROS_INFO("No local_goal_data");  //デバック用
         return;
     }
 
-    tf2::doTransform(*msg, waypoints_, transform);
+    tf2::doTransform(*msg, local_goal_, transform);
 
 }
 
@@ -70,11 +68,11 @@ void DWA::ob_position_callback(const geometry_msgs::PoseArray::ConstPtr& msg)
     flag_ob_position_ = true;
 }
 
-//途中のゴール(waypoints)に着くまでtrueを返す
+//local_goalに着くまでtrueを返す
 bool DWA::goal_check()
 {
     //msg受信済みか確認
-    if((flag_ob_position_ || flag_waypoints_) == false)
+    if((flag_ob_position_ || flag_local_goal_) == false)
     {
         // ROS_INFO("Data catch false");  //デバック用
         return false;
@@ -82,8 +80,8 @@ bool DWA::goal_check()
 
     // ROS_INFO("Data catch success!");  //デバック用
 
-    double dx = waypoints_.point.x - roomba_.x;
-    double dy = waypoints_.point.y - roomba_.y;
+    double dx = local_goal_.point.x - roomba_.x;
+    double dy = local_goal_.point.y - roomba_.y;
     double dist_to_goal = hypot(dx, dy);
 
     // ROS_INFO("calc dist_to_goal");  //デバック用
@@ -164,7 +162,7 @@ double DWA::calc_heading_eval(std::vector<State>& traj)
     double theta = traj.back().yaw;
 
     //最終時刻での位置に対するゴール方向
-    double goal_theta = atan2(waypoints_.point.y - traj.back().y, waypoints_.point.x - traj.back().x);
+    double goal_theta = atan2(local_goal_.point.y - traj.back().y, local_goal_.point.x - traj.back().x);
 
     //ゴールまでの方位差分
     double target_theta = 0.0;  //初期化
@@ -184,10 +182,11 @@ double DWA::calc_distance_eval(std::vector<State>& traj)
 {
     double dist_to_ob = 0.0;  //障害物までの距離
     double min_dist_to_ob = search_range_;  //パス上の最も近い障害物までの距離
+
     //roombaの軌道上に障害物がないか探索
     for(auto& state : traj)
     {
-        for(auto& obstacle : ob_position_.poses)  //ob_position_の部分は名前を直す必要があるかも
+        for(auto& obstacle : ob_position_.poses)
         {
             //障害物までの距離を計算
             double dx = obstacle.position.x - state.x;
@@ -275,7 +274,7 @@ std::vector<double> DWA::calc_input()
                 input[0] = velocity;
                 input[1] = yawrate;
                 max_score_index = j;
-                ROS_INFO("update max_score");  //デバック用
+                // ROS_INFO("update max_score");  //デバック用
             }
 
             j++;
@@ -287,7 +286,7 @@ std::vector<double> DWA::calc_input()
         if(i == 0)
         {
             yawrate_size = j;
-            ROS_INFO("yawrate_size = %d", yawrate_size);  //デバック用
+            // ROS_INFO("yawrate_size = %d", yawrate_size);  //デバック用
         }
 
         i++;
@@ -395,8 +394,8 @@ std::vector<double> DWA::calc_input()
     roomba_.velocity = input[0];
     roomba_.yawrate = input[1];
 
-    ROS_INFO("roomba_.velocity: %lf", roomba_.velocity);  //デバック用
-    ROS_INFO("roomba_.yawrate : %lf", roomba_.yawrate);  //デバック用
+    // ROS_INFO("roomba_.velocity: %lf", roomba_.velocity);  //デバック用
+    // ROS_INFO("roomba_.yawrate : %lf", roomba_.yawrate);  //デバック用
 
     //パスを可視化して適切なパスが選択できているかを評価
     if(visualize_check_ == true)
@@ -408,7 +407,7 @@ std::vector<double> DWA::calc_input()
             if(i == max_score_index)
             {
                 visualize_traj(trajectories[i], pub_optimal_path_, now);
-                ROS_INFO("This is optimal_path!");  //デバック用
+                // ROS_INFO("This is optimal_path!");  //デバック用
             }
             else
                 visualize_traj(trajectories[i], pub_predict_path_, now);
@@ -457,22 +456,22 @@ void DWA::roomba_control(double velocity, double yawrate)
 void DWA::process()
 {
     ros::Rate loop_rate(hz_);
-    tf2_ros::TransformListener tf_listener(tf_buffer_);  //waypoints_の情報を取得
+    tf2_ros::TransformListener tf_listener(tf_buffer_);  //local_goal_の情報を取得
 
     while(ros::ok())
     {
         if(goal_check())
         // if(true)  //他のデータをサブスクライブせずにパスが可視化できるか確認するとき用
         {
-            ROS_INFO("calc_input start");  //デバック用
+            // ROS_INFO("calc_input start");  //デバック用
             std::vector<double> input = calc_input();
             roomba_control(input[0], input[1]);
-            ROS_INFO("yattane!");  //デバック用
+            // ROS_INFO("yattane!");  //デバック用
         }
         else
         {
             roomba_control(0.0, 0.0);
-            ROS_INFO("Can't move!");  //デバック用
+            // ROS_INFO("Can't move!");  //デバック用
         }
 
         ros::spinOnce();
