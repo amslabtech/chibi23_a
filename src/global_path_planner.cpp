@@ -130,7 +130,7 @@ void AstarPath::assign_global_path_msgs()
 		global_path_point.pose.orientation.w = 1;
 		global_path_point.header.frame_id = "map";
 		global_path_point.header.stamp = ros::Time::now();
-		global_path_msgs.push_back(global_path_point);
+		global_path_msgs.poses.push_back(global_path_point);
 	}
 }
 

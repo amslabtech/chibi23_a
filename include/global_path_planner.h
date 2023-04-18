@@ -51,12 +51,12 @@ class AstarPath
 
     int hz;
 
-    ros::NodeHandle nh;
-    ros::NodeHandle private_nh;
-    ros::Subscriber sub_map;
-    ros::Publisher  pub_map;
-    ros::Publisher  pub_path;
-    ros::Publisher  pub_goal;
+    ros::NodeHandle            nh;
+    ros::NodeHandle            private_nh;
+    ros::Subscriber            sub_map;
+    ros::Publisher             pub_map;
+    ros::Publisher             pub_path;
+    ros::Publisher             pub_goal;
     nav_msgs::OccupancyGrid    the_map; //house map
     nav_msgs::Path             global_path_msgs; //マップ全体でのパス
 };
