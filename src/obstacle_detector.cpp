@@ -4,7 +4,7 @@
 ObstacleMapCreator::ObstacleMapCreator() : private_nh_("~") {
     private_nh_.param("hz", hz_, {10});
     private_nh_.param("map_size", map_size_, {6}); //周囲の障害物情報を保持するマップ（obstacle_map）の大きさ
-    private_nh_.param("map_gridSize", map_gridSize_, {0.02}); //obstacle_mapの1マスの大きさ
+    private_nh_.param("map_gridSize", map_gridSize_, {0.02}); //obstacle_map_の1マスの大きさ
 
     odo_sub_ = nh_.subscribe("/roomba/odometry", 100, &ObstacleMapCreator::odo_callback, this);
     laser_sub_ = nh_.subscribe("scan", 10, &ObstacleMapCreator::laser_callback, this);
@@ -20,6 +20,7 @@ ObstacleMapCreator::ObstacleMapCreator() : private_nh_("~") {
     obstacle_map_.data.reserve(obstacle_map_.info.width * obstacle_map_.info.height);
 }
 
+//LiDARのスキャンデータからマップを作成
 void ObstacleMapCreator::laser_callback(const sensor_msgs::LaserScan::ConstPtr &msg) {
     laser_scan_ = *msg;
     //ROS_INFO("scan"); //for debug
@@ -37,6 +38,7 @@ void ObstacleMapCreator::laser_callback(const sensor_msgs::LaserScan::ConstPtr &
     first_scan_done_ = true;
 }
 
+//roombaのオドメトリデータを取得し、移動量を計算
 void ObstacleMapCreator::odo_callback(const nav_msgs::Odometry::ConstPtr &msg) {
     current_odo_ = *msg;
 
@@ -51,6 +53,7 @@ void ObstacleMapCreator::odo_callback(const nav_msgs::Odometry::ConstPtr &msg) {
     previous_odo_ = current_odo_;
 }
 
+//マップ全領域の占有状態を不明とする
 void ObstacleMapCreator::init_map() {
     obstacle_map_.data.clear();
     int size = obstacle_map_.info.width * obstacle_map_.info.height;
@@ -59,6 +62,7 @@ void ObstacleMapCreator::init_map() {
     }
 }
 
+//roombaを中心としたxy座標をobstace_map_.dataのインデックスに変換
 int ObstacleMapCreator::xy_to_map_index(double x, double y) {
     int x_index = (x - obstacle_map_.info.origin.position.x) / map_gridSize_;
     int y_index = (y - obstacle_map_.info.origin.position.y) / map_gridSize_;
@@ -97,6 +101,7 @@ bool ObstacleMapCreator::is_ignore_angle(double angle) {
     }
 }
 
+//スキャンによる障害物情報をマップに反映する
 void ObstacleMapCreator::add_obstacles_to_map(double angle, double laser_range) {
     if (!is_ignore_angle(angle)) {
         laser_range = map_size_;
