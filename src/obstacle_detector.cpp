@@ -1,9 +1,10 @@
 #include "obstacle_detector/obstacle_detector.h"
 
+//chibi22_bのソースコードを参考に作成
 ObstacleMapCreator::ObstacleMapCreator() : private_nh_("~") {
     private_nh_.param("hz", hz_, {10});
-    private_nh_.param("map_size", map_size_, {6});
-    private_nh_.param("map_gridSize", map_gridSize_, {0.02});
+    private_nh_.param("map_size", map_size_, {6}); //周囲の障害物情報を保持するマップ（obstacle_map）の大きさ
+    private_nh_.param("map_gridSize", map_gridSize_, {0.02}); //obstacle_mapの1マスの大きさ
 
     odo_sub_ = nh_.subscribe("/roomba/odometry", 100, &ObstacleMapCreator::odo_callback, this);
     laser_sub_ = nh_.subscribe("scan", 10, &ObstacleMapCreator::laser_callback, this);
@@ -21,12 +22,15 @@ ObstacleMapCreator::ObstacleMapCreator() : private_nh_("~") {
 
 void ObstacleMapCreator::laser_callback(const sensor_msgs::LaserScan::ConstPtr &msg) {
     laser_scan_ = *msg;
-    //ROS_INFO("scan");
+    //ROS_INFO("scan"); //for debug
+    
+    //初回スキャン時のみマップを初期化
     if (!is_map_initialized_) {
         init_map();
         is_map_initialized_ = true;
     }
 
+    //初回のスキャンが完了し、/roomba/odometryの購読が2回以上行われた時、マップを更新
     if (first_scan_done_ && second_odometry_got_) update_obstacle_poses();
 
     create_obstacle_map();
