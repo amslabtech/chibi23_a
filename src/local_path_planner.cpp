@@ -25,6 +25,7 @@ DWA::DWA():private_nh_("~")
     private_nh_.param("vel_step", vel_step_, {0.05});
     private_nh_.param("yawrate_step", yawrate_step_, {0.1});
     private_nh_.param("visualize_check", visualize_check_, {true});
+    private_nh_.param("smoothing_check", smoothing_check_, {false});
 
     //Subscriber
     sub_local_goal_ = nh_.subscribe("/local_goal", 1, &DWA::local_goal_callback, this);
@@ -246,148 +247,150 @@ std::vector<double> DWA::calc_input()
 
     int vel_size = 0;  //velocityの分割個数
     int yawrate_size = 0;  //yawrateの分割個数
+    int max_score_index = 0;  //評価値が最大のときのインデックス格納用
 
     //-----------スムージング関数の適用なし-----------
-
-   /* double max_score = -1000.0;  //評価値の最大値格納用
-    int max_score_index = 0;  //評価値が最大のときのインデックス格納用
-
-    //並進速度と旋回速度のすべての組み合わせを評価
-    for(double velocity=dw_.min_vel; velocity<=dw_.max_vel; velocity+=vel_step_)
+    if(smoothing_check_ == false)
     {
-        for(double yawrate=dw_.min_yawrate; yawrate<=dw_.max_yawrate; yawrate+=yawrate_step_)
-        {
-            std::vector<State> traj = predict_trajectory(velocity, yawrate);  //予測軌道を生成
-            // ROS_INFO("create predict_trajectory success!");  //デバック用
-                                                             //
-            one_score = calc_evaluation(traj);  //予測軌道に評価関数を適用
-            score_yawrate.push_back(one_score);
-            // ROS_INFO("velocity: %lf", velocity);  //デバック用
-            // ROS_INFO("yawrate : %lf", yawrate);  //デバック用
-            // ROS_INFO("score   : %lf", one_score);  //デバック用
-            trajectories.push_back(traj);
 
-            //評価値が一番大きいデータの探索
-            if(max_score < one_score)
+        double max_score = -1000.0;  //評価値の最大値格納用
+
+        //並進速度と旋回速度のすべての組み合わせを評価
+        for(double velocity=dw_.min_vel; velocity<=dw_.max_vel; velocity+=vel_step_)
+        {
+            for(double yawrate=dw_.min_yawrate; yawrate<=dw_.max_yawrate; yawrate+=yawrate_step_)
             {
-                max_score = one_score;
-                input[0] = velocity;
-                input[1] = yawrate;
-                max_score_index = j;
-                // ROS_INFO("update max_score");  //デバック用
+                std::vector<State> traj = predict_trajectory(velocity, yawrate);  //予測軌道を生成
+                // ROS_INFO("create predict_trajectory success!");  //デバック用
+
+                one_score = calc_evaluation(traj);  //予測軌道に評価関数を適用
+                score_yawrate.push_back(one_score);
+                // ROS_INFO("velocity: %lf", velocity);  //デバック用
+                // ROS_INFO("yawrate : %lf", yawrate);  //デバック用
+                // ROS_INFO("score   : %lf", one_score);  //デバック用
+                trajectories.push_back(traj);
+
+                //評価値が一番大きいデータの探索
+                if(max_score < one_score)
+                {
+                    max_score = one_score;
+                    input[0] = velocity;
+                    input[1] = yawrate;
+                    max_score_index = j;
+                    // ROS_INFO("update max_score");  //デバック用
+                }
+
+                j++;
             }
 
-            j++;
-        }
+            scores.push_back(score_yawrate);
 
-        scores.push_back(score_yawrate);
-
-        //yawrateの分割個数を格納
-        if(i == 0)
-        {
-            yawrate_size = j;
-            // ROS_INFO("yawrate_size = %d", yawrate_size);  //デバック用
-        }
-
-        i++;
-    }*/
-
-    //-----------スムージング関数の適用あり-----------
-
-    //並進速度と旋回速度のすべての組み合わせを評価
-    for(double velocity=dw_.min_vel; velocity<=dw_.max_vel; velocity+=vel_step_)
-    {
-        for(double yawrate=dw_.min_yawrate; yawrate<=dw_.max_yawrate; yawrate+=yawrate_step_)
-        {
-            std::vector<State> traj = predict_trajectory(velocity, yawrate);  //予測軌道を生成
-            // ROS_INFO("create predict_trajectory success!");  //デバック用
-                                                             //
-            one_score = calc_evaluation(traj);  //予測軌道に評価関数を適用
-            score_yawrate.push_back(one_score);
-            // ROS_INFO("velocity: %lf", velocity);  //デバック用
-            // ROS_INFO("yawrate : %lf", yawrate);  //デバック用
-            // ROS_INFO("score   : %lf", one_score);  //デバック用
-            trajectories.push_back(traj);
-
-            j++;
-        }
-
-        scores.push_back(score_yawrate);
-
-        //yawrateの分割個数を格納
-        if(i == 0)
-        {
-            yawrate_size = j;
-            ROS_INFO("yawrate_size = %d", yawrate_size);  //デバック用
-        }
-
-        i++;
-    }
-
-    // ROS_INFO("calc all score finish! ");  //デバック用
-
-    //velocityの分割個数を格納
-    vel_size = i;
-    ROS_INFO("vel_size = %d", vel_size);  //デバック用
-
-    //評価値に対してスムージング関数を適用
-    double smoothing_score;  //スムージング関数適用後評価値格納用
-    // std::vector< std::vector<double> > smoothing_score;  //スムージング関数適用後評価値格納用
-    // smoothing_score = scores;
-
-    double score_sum;  //隣接する評価値との合計値を格納
-    // int k = yawrate_size;  //カウンタ変数
-    // int l = 0;  //カウンタ変数
-
-    double max_score = -1000.0;  //評価値の最大値格納用
-    int max_vel_score_index = 0;  //評価値が最大となる速度のインデックス格納用
-    int max_yawrate_score_index = 0;  //評価値が最大となる旋回速度のインデックス格納用
-    int max_score_index = 0;  //評価値が最大のときのインデックス格納用
-
-    // ROS_INFO("kokomade dekiteruyo!");  //デバック用
-
-    for(i=0; i<vel_size-2; i++)  //隣接するデータ数が減ってしまう端のデータは使わない
-    {
-        for(j=0; j<yawrate_size-2; j++)
-        {
-            score_sum = 0.0;
-
-            for(int m=i; m<=i+2; m++)
+            //yawrateの分割個数を格納
+            if(i == 0)
             {
-                for(int n=j; n<=j+2; n++)
+                yawrate_size = j;
+                // ROS_INFO("yawrate_size = %d", yawrate_size);  //デバック用
+            }
+
+            i++;
+        }
+    }
+    //-----------スムージング関数の適用あり-----------
+    else if(smoothing_check_ == true)
+    {
+        //並進速度と旋回速度のすべての組み合わせを評価
+        for(double velocity=dw_.min_vel; velocity<=dw_.max_vel; velocity+=vel_step_)
+        {
+            for(double yawrate=dw_.min_yawrate; yawrate<=dw_.max_yawrate; yawrate+=yawrate_step_)
+            {
+                std::vector<State> traj = predict_trajectory(velocity, yawrate);  //予測軌道を生成
+                // ROS_INFO("create predict_trajectory success!");  //デバック用
+
+                one_score = calc_evaluation(traj);  //予測軌道に評価関数を適用
+                score_yawrate.push_back(one_score);
+                // ROS_INFO("velocity: %lf", velocity);  //デバック用
+                // ROS_INFO("yawrate : %lf", yawrate);  //デバック用
+                // ROS_INFO("score   : %lf", one_score);  //デバック用
+                trajectories.push_back(traj);
+
+                j++;
+            }
+
+            scores.push_back(score_yawrate);
+
+            //yawrateの分割個数を格納
+            if(i == 0)
+            {
+                yawrate_size = j;
+                ROS_INFO("yawrate_size = %d", yawrate_size);  //デバック用
+            }
+
+            i++;
+        }
+
+        // ROS_INFO("calc all score finish! ");  //デバック用
+
+        //velocityの分割個数を格納
+        vel_size = i;
+        ROS_INFO("vel_size = %d", vel_size);  //デバック用
+
+        //評価値に対してスムージング関数を適用
+        double smoothing_score;  //スムージング関数適用後評価値格納用
+        // std::vector< std::vector<double> > smoothing_score;  //スムージング関数適用後評価値格納用
+        // smoothing_score = scores;
+
+        double score_sum;  //隣接する評価値との合計値を格納
+        // int k = yawrate_size;  //カウンタ変数
+        // int l = 0;  //カウンタ変数
+
+        double max_score = -1000.0;  //評価値の最大値格納用
+        int max_vel_score_index = 0;  //評価値が最大となる速度のインデックス格納用
+        int max_yawrate_score_index = 0;  //評価値が最大となる旋回速度のインデックス格納用
+
+        // ROS_INFO("kokomade dekiteruyo!");  //デバック用
+
+        for(i=0; i<vel_size-2; i++)  //隣接するデータ数が減ってしまう端のデータは使わない
+        {
+            for(j=0; j<yawrate_size-2; j++)
+            {
+                score_sum = 0.0;
+
+                for(int m=i; m<=i+2; m++)
                 {
-                    score_sum += scores[m][n];
-                    // ROS_INFO("calc score_sum[%d][%d]", i, j);  //デバック用
+                    for(int n=j; n<=j+2; n++)
+                    {
+                        score_sum += scores[m][n];
+                        // ROS_INFO("calc score_sum[%d][%d]", i, j);  //デバック用
+                    }
+                }
+
+                smoothing_score = score_sum / 9.0;
+                // ROS_INFO("smoothing_score = %lf", smoothing_score);  //デバック用
+
+                //評価値が一番大きいデータの探索
+                if(max_score < smoothing_score)
+                {
+                    max_score = smoothing_score;
+                    max_vel_score_index = i+1;
+                    max_yawrate_score_index = j+1;
+                    max_score_index = yawrate_size*i + j;
+                    // ROS_INFO("update max_score");  //デバック用
                 }
             }
-
-            smoothing_score = score_sum / 9.0;
-            // ROS_INFO("smoothing_score = %lf", smoothing_score);  //デバック用
-
-            //評価値が一番大きいデータの探索
-            if(max_score < smoothing_score)
-            {
-                max_score = smoothing_score;
-                max_vel_score_index = i+1;
-                max_yawrate_score_index = j+1;
-                max_score_index = yawrate_size*i + j;
-                // ROS_INFO("update max_score");  //デバック用
-            }
         }
+
+        // ROS_INFO("get smoothing_score!");  //デバック用
+
+        ROS_INFO("max_score_index: %d", max_score_index);  //デバック用
+        ROS_INFO("max_score: %lf", max_score);  //デバック用
+
+        //最適な制御入力を格納
+        ROS_INFO("max_vel_score_index: %d", max_vel_score_index);  //デバック用
+        ROS_INFO("max_yawrate_score_index: %d", max_yawrate_score_index);  //デバック用
+
+        input[0] = dw_.min_vel + vel_step_ * (max_vel_score_index);
+        input[1] = dw_.min_yawrate + yawrate_step_ * (max_yawrate_score_index);
     }
-
-    // ROS_INFO("get smoothing_score!");  //デバック用
-
-    ROS_INFO("max_score_index: %d", max_score_index);  //デバック用
-    ROS_INFO("max_score: %lf", max_score);  //デバック用
-
-    //最適な制御入力を格納
-    ROS_INFO("max_vel_score_index: %d", max_vel_score_index);  //デバック用
-    ROS_INFO("max_yawrate_score_index: %d", max_yawrate_score_index);  //デバック用
-
-    input[0] = dw_.min_vel + vel_step_ * (max_vel_score_index);
-    input[1] = dw_.min_yawrate + yawrate_step_ * (max_yawrate_score_index);
-
     // -------- スムージング関数適用はここまで
 
     //現在速度の記録

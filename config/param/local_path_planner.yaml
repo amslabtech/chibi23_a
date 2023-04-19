@@ -1,6 +1,9 @@
 #trueならパスを可視化
 visualize_check: true
 
+#trueならスムージング関数を適用
+smoothing_score: false
+
 #制御ループ周波数
 hz: 10  #ループ周波数[Hz]
 

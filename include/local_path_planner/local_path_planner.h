@@ -77,6 +77,7 @@ class DWA
         double vel_step_;  //最適な並進速度を計算するときの刻み幅[m/s]
         double yawrate_step_;  //最適な旋回速度を計算するときの刻み幅[rad/s]
         bool visualize_check_;  //パスを可視化するかどうかの設定用
+        bool smoothing_check_;  //スムージング関数を適用するかどうかの設定用
 
         //msgの受け取り判定用
         bool flag_local_goal_ = false;
