@@ -14,11 +14,27 @@ AstarPath::AstarPath():private_nh("~")
 		start_position.first = xml_start[0];
 		start_position.second = xml_start[1];
 		XmlRpc::XmlRpcValue xml_goals;
-		private_nh.getParam("/param/xml_goals", xml_goals);
-		for( int i=0; i<xml_goals.size(); ++i ) {
-					goal_positions[i].first = xml_goals[i][0];
-					goal_positions[i].second = xml_goals[i][1];
-		}
+
+		if( xml_goals.getType() != XmlRpc::XmlRpcValue::TypeArray ) {
+			ROS_ERROR("param 'goals' is not a list");
+		} else {
+				for( int i=0; i<xml_goals.size(); ++i ) {
+					if( xml_goals[i].getType() != XmlRpc::XmlRpcValue::TypeArray ) {
+							ROS_ERROR("goals[%d] is not a list", i);
+					} else {
+							if( xml_goals[i].size() != 2 ) {
+								ROS_ERROR("goals[%d] is not a pair", i);
+							} else if(
+							xml_goals[i][0].getType() != XmlRpc::XmlRpcValue::TypeDouble ||
+							xml_goals[i][1].getType() != XmlRpc::XmlRpcValue::TypeDouble ) {
+								ROS_ERROR("goals[%d] is not a pair of doubles", i);
+							} else {
+									start_position.first = xml_start[0];
+									start_position.second = xml_start[1];
+							}
+					}
+			}
+	 }
 }
 
 void AstarPath::map_callback(const nav_msgs::OccupancyGrid::ConstPtr &msg)
