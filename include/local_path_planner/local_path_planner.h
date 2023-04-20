@@ -39,13 +39,8 @@ class DWA
 
     private:
         //コールバック関数
-        void waypoints_callback(const geometry_msgs::PointStamped::ConstPtr& msg);
+        void local_goal_callback(const geometry_msgs::PointStamped::ConstPtr& msg);
         void ob_position_callback(const geometry_msgs::PoseArray::ConstPtr& msg);
-
-        //void odometry_callback(const nav_msgs::Odometry::ConstPtr&);
-        //void laser_callback(const sensor_msgs::LaserScan::ConstPtr&);
-        //double GetRPY(const nav_msgs::Odometry &o);
-        //void NormalizationYaw(double& yaw, double& theta, int& check, int& tmp_check, double& plus_pi);
 
         //引数あり関数
         void move_image(State& imstate, double velocity, double yawrate);  //仮想ロボットを移動
@@ -66,7 +61,7 @@ class DWA
         //yamlファイルで設定可能な変数
         int hz_;        //ループ周波数[Hz]
         double dt_;       //微小時間[s]
-        double goal_tolerance_;  //waypoints_に対する許容誤差[m]
+        double goal_tolerance_;  //local_goal_に対する許容誤差[m]
         double min_vel_;     //最低並進速度[m/s]
         double max_vel_;     //最高並進速度[m/s]
         double max_yawrate_;  //最高旋回速度[rad/s]
@@ -82,37 +77,22 @@ class DWA
         double vel_step_;  //最適な並進速度を計算するときの刻み幅[m/s]
         double yawrate_step_;  //最適な旋回速度を計算するときの刻み幅[rad/s]
         bool visualize_check_;  //パスを可視化するかどうかの設定用
+        bool smoothing_check_;  //スムージング関数を適用するかどうかの設定用
 
         //msgの受け取り判定用
-        bool flag_waypoints_ = false;
+        bool flag_local_goal_ = false;
         bool flag_ob_position_ = false;
-
-       // double yaw_;
-        //double theta_;
-        //double init_theta_;
-        //int check_;
-        //int tmp_check_;
-        //double plus_pi_;
-        //int center_;
-        //int count_;
-
-        //nav_msgs::Odometry odometry_;
-        //sensor_msgs::LaserScan laser_;
 
         //NodeHandle
         ros::NodeHandle nh_;
         ros::NodeHandle private_nh_;
-
-        //ros::Subscriber odom_sub_;
-        //ros::Subscriber laser_sub_;
-
 
         //構造体
         State roomba_;
         Dynamic_Window dw_;
 
         //Subscriber
-        ros::Subscriber sub_waypoints_;
+        ros::Subscriber sub_local_goal_;
         ros::Subscriber sub_ob_position_;
 
         //Publisher
@@ -120,7 +100,7 @@ class DWA
         ros::Publisher pub_predict_path_;
         ros::Publisher pub_optimal_path_;
 
-        geometry_msgs::PointStamped waypoints_;
+        geometry_msgs::PointStamped local_goal_;
         geometry_msgs::PoseArray ob_position_;
 
         //tf
