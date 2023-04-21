@@ -9,32 +9,23 @@ AstarPath::AstarPath():private_nh("~")
 
 		// パラメータの読み込み 
 		// FIXME: 関数に処理を分割したい
-		XmlRpc::XmlRpcValue xml_start;
-		private_nh.getParam("/param/start_start", xml_start);
-		start_position.first = xml_start[0];
-		start_position.second = xml_start[1];
-		XmlRpc::XmlRpcValue xml_goals;
+		vector<int> start_param;
+		private_nh.getParam("start_param", start_param);
+		start_position.first = start_param[0];
+		start_position.second = star_param[1];
 
-		if( xml_goals.getType() != XmlRpc::XmlRpcValue::TypeArray ) {
-			ROS_ERROR("param 'goals' is not a list");
-		} else {
-				for( int i=0; i<xml_goals.size(); ++i ) {
-					if( xml_goals[i].getType() != XmlRpc::XmlRpcValue::TypeArray ) {
-							ROS_ERROR("goals[%d] is not a list", i);
-					} else {
-							if( xml_goals[i].size() != 2 ) {
-								ROS_ERROR("goals[%d] is not a pair", i);
-							} else if(
-							xml_goals[i][0].getType() != XmlRpc::XmlRpcValue::TypeDouble ||
-							xml_goals[i][1].getType() != XmlRpc::XmlRpcValue::TypeDouble ) {
-								ROS_ERROR("goals[%d] is not a pair of doubles", i);
-							} else {
-									start_position.first = xml_start[0];
-									start_position.second = xml_start[1];
-							}
-					}
-			}
-	 }
+		vector<int> goal_x_params;
+		vector<int> goal_y_params;
+
+		private_nh.getParam("goals_x", goal_x_params);
+		private_nh.getParam("goals_y", goal_y_params);
+
+		if (goal_x_params.size( ) != goal_y_params.size()) ROS_ERROR("goals_x and goals_y are not same size");
+
+		for( int i=0; i<goal_x_params.size(); ++i ) {
+							goal_position[i].first = goal_x_params[0];
+							start_position[i].second =goal_y_params[1];
+		 }
 }
 
 void AstarPath::map_callback(const nav_msgs::OccupancyGrid::ConstPtr &msg)
