@@ -57,7 +57,7 @@ private:
     void move();
 
     int get_map_data(double x, double y);
-    double dist_on_map(double map_x, double map_y, double laser_angle);
+    double dist_on_map(double map_x, double map_y, double laser_angle, double laser_length);
 
     double likelihood_model(double x, double mu, double dev);
     double calc_weight(Particle &p);
@@ -67,8 +67,11 @@ private:
     void estimate_pose();
     void measurement();
 
-    int particle_number(int num, double previous_sum_weight, double current_sum_weight);
+    // int particle_number(int num, double previous_sum_weight, double current_sum_weight);
     void sampling();
+    void resampling();
+    int laser_reset();
+    void expansion_reset();
 
     void publish_particles();
 
@@ -76,7 +79,7 @@ private:
     int hz_;
 
     int num_;
-    int specific_num_;
+    int replace_num_;
 
     double init_x_;
     double init_y_;
@@ -87,10 +90,23 @@ private:
 
     double laser_dev_per_dist_;
     int laser_step_;
+    double laser_ignore_range_;
 
     double sum_weight;
-    double current_sum_weight;
-    double previous_sum_weight;
+    double max_weight;
+    //double current_sum_weight;
+    //double previous_sum_weight;
+
+    double alpha_;
+    double alpha_th_;
+    double alpha_slow_;
+    double alpha_fast_;
+    double alpha_slow_th_;
+    double alpha_fast_th_;
+
+    int expansion_count_;
+    int expansion_limit_;
+    double expansion_reset_dev_;
 
     bool init_request_particle_ = true;
     bool init_request_sum_weight_ = true;
