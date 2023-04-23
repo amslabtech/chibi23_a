@@ -12,7 +12,7 @@ AstarPath::AstarPath():private_nh("~")
 		vector<int> start_param;
 		private_nh.getParam("start_param", start_param);
 		start_position.first = start_param[0];
-		start_position.second = star_param[1];
+		start_position.second = start_param[1];
 
 		vector<int> goal_x_params;
 		vector<int> goal_y_params;
