@@ -17,8 +17,8 @@ AstarPath::AstarPath():private_nh("~")
 		vector<int> goal_x_params;
 		vector<int> goal_y_params;
 
-		private_nh.getParam("goals_x", goal_x_params);
-		private_nh.getParam("goals_y", goal_y_params);
+		private_nh.getParam("goals_x_params", goal_x_params);
+		private_nh.getParam("goals_y_params", goal_y_params);
 
 		if (goal_x_params.size( ) != goal_y_params.size()) ROS_ERROR("goals_x and goals_y are not same size");
 
