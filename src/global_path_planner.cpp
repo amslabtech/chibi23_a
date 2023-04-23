@@ -24,7 +24,7 @@ AstarPath::AstarPath():private_nh("~")
 
 		for( int i=0; i<goal_x_params.size(); ++i ) {
 							goal_positions[i].first = goal_x_params[0];
-							start_positions[i].second =goal_y_params[1];
+							goal_positions[i].second = goal_y_params[1];
 		 }
 }
 
