@@ -23,8 +23,8 @@ AstarPath::AstarPath():private_nh("~")
 		if (goal_x_params.size( ) != goal_y_params.size()) ROS_ERROR("goals_x and goals_y are not same size");
 
 		for( int i=0; i<goal_x_params.size(); ++i ) {
-							goal_position[i].first = goal_x_params[0];
-							start_position[i].second =goal_y_params[1];
+							goal_positions[i].first = goal_x_params[0];
+							start_positions[i].second =goal_y_params[1];
 		 }
 }
 
