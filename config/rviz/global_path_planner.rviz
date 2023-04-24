@@ -6,6 +6,7 @@ Panels:
       Expanded:
         - /Global Options1
         - /Status1
+        - /Path1
       Splitter Ratio: 0.5
     Tree Height: 559
   - Class: rviz/Selection
@@ -82,7 +83,7 @@ Visualization Manager:
       Radius: 0.029999999329447746
       Shaft Diameter: 0.10000000149011612
       Shaft Length: 0.10000000149011612
-      Topic: /path
+      Topic: /global_path
       Unreliable: false
       Value: true
   Enabled: true
@@ -113,7 +114,7 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz/Orbit
-      Distance: 54.73565673828125
+      Distance: 53.94746398925781
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.05999999865889549
         Stereo Focal Distance: 1
@@ -129,9 +130,9 @@ Visualization Manager:
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.009999999776482582
-      Pitch: 0.785398006439209
+      Pitch: 0.5153982639312744
       Target Frame: <Fixed Frame>
-      Yaw: 0.785398006439209
+      Yaw: 1.175406813621521
     Saved: ~
 Window Geometry:
   Displays:
