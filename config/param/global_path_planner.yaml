@@ -1,4 +1,4 @@
-start_param: [ -1.713, 0.143]
+start_param: [-1.713, 0.143]
 
 goal_x_params: [
                     12.975,

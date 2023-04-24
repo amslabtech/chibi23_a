@@ -40,14 +40,14 @@ class AstarPath
     double                  heuristic(int x1, int y1, int x2, int y2);
     void                    map_callback(const nav_msgs::OccupancyGrid::ConstPtr &msg);
     void                    assign_global_path_msgs();
-    
+
     int hz;
     vector<vector<int>>    map_grid;
     vector<pair<int, int>> global_path;
     pair<int, int>         origin; // マップの原点
     bool                   map_check;
-    pair<int, int>         start_position;
-    vector<pair<int, int>> goal_positions;
+    pair<double, double>         start_position;
+    vector<pair<double, double>> goal_positions;
     pair<int, int>         start;
     vector<pair<int, int>> goals;
     float                  map_resolution;
