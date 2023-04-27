@@ -9,7 +9,8 @@ ObstacleMapCreator::ObstacleMapCreator() : private_nh_("~") {
     odo_sub_ = nh_.subscribe("/roomba/odometry", 100, &ObstacleMapCreator::odo_callback, this);
     laser_sub_ = nh_.subscribe("scan", 10, &ObstacleMapCreator::laser_callback, this);
     obstacle_map_pub_ = nh_.advertise<nav_msgs::OccupancyGrid>("obstacle_map", 10);
-    pub_obs_poses_ = nh_.advertise<geometry_msgs::PoseArray>("obstacle", 1);
+//    pub_obs_poses_ = nh_.advertise<geometry_msgs::PoseArray>("/local_map/obstacle", 1);
+    pub_obs_poses_ = nh_.advertise<geometry_msgs::PoseArray>("/local_map/obstacle", 1);
 
 
     obstacle_poses_.header.frame_id = "base_link";
@@ -25,8 +26,7 @@ ObstacleMapCreator::ObstacleMapCreator() : private_nh_("~") {
 //LiDARのスキャンデータからobstacle_map_を作成
 void ObstacleMapCreator::laser_callback(const sensor_msgs::LaserScan::ConstPtr &msg) {
     laser_scan_ = *msg;
-    //ROS_INFO("scan"); //for debug
-    
+
     if (!is_map_initialized_) { //初回スキャン時のみobstacle_map_を初期化
         init_map();
         is_map_initialized_ = true;
@@ -90,10 +90,21 @@ bool ObstacleMapCreator::is_within_obstacle_map(double x, double y) {
 bool ObstacleMapCreator::is_ignore_angle(double angle) {
     angle = abs(angle);
 
-    if ((angle > M_PI * 2 / 16) && (angle < M_PI * 5 / 16))  //柱の位置
+//    if ((angle > M_PI * 14 / 64) && (angle < M_PI * 18 / 64))  //柱の位置
+//    {
+//        return false;
+//    } else if (angle > M_PI * 45 / 64)                       //柱の位置
+//    {
+//        return false;
+//    } else                                                //柱の位置ではない
+//    {
+//        return true;
+//    }
+
+    if ((angle > M_PI * 12 / 64) && (angle < M_PI * 20 / 64))  //柱の位置
     {
         return false;
-    } else if (angle > M_PI * 11 / 16)                       //柱の位置
+    } else if (angle > M_PI * 43 / 64)                       //柱の位置
     {
         return false;
     } else                                                //柱の位置ではない
@@ -118,8 +129,6 @@ void ObstacleMapCreator::add_obstacles_to_map(double angle, double laser_range) 
             return;
         }
 
-        //ROS_INFO("ang %f dist %f", angle, distance);
-
         int map_index = xy_to_map_index(x_now, y_now);
 
         if (second_odometry_got_) { //second_odometry_got_がtrueの時、updated_obstacle_posesは空ではない
@@ -137,10 +146,12 @@ void ObstacleMapCreator::add_obstacles_to_map(double angle, double laser_range) 
         if (distance >= laser_range) { //obstacle_map_において、roombaからの距離が障害物までの距離（laser_range[i]）を超える領域には障害物があるものとする
             obstacle_map_.data[map_index] = 100;
 
-            obstacle_pose_.position.x = x_now;
-            obstacle_pose_.position.y = y_now;
-            obstacle_poses_.poses.push_back(obstacle_pose_); //障害物の位置情報を記録
-            //return;
+            if (!is_nearest_obstacle_record_) { //それぞれの角度において、最も近い障害物のみ記録する
+                obstacle_pose_.position.x = x_now;
+                obstacle_pose_.position.y = y_now;
+                obstacle_poses_.poses.push_back(obstacle_pose_);
+                is_nearest_obstacle_record_ = true;
+            }
         } else {
             obstacle_map_.data[map_index] = 0;
         }
@@ -177,7 +188,9 @@ void ObstacleMapCreator::create_obstacle_map() {
     obstacle_poses_.poses.clear();
     for (int i = 0; i < int(laser_scan_.ranges.size()); i += angle_step) { //それぞれ角度の障害物までの距離をobstacle_map_に反映する
         double angle = i * laser_scan_.angle_increment + laser_scan_.angle_min;
-        add_obstacles_to_map(angle, laser_scan_.ranges[i]);
+        double laser_range = laser_scan_.ranges[i];
+        if (laser_range < 0.015) continue;
+        add_obstacles_to_map(angle, laser_range);
     }
     updated_obstacle_poses_.poses.clear();
 }
@@ -185,12 +198,9 @@ void ObstacleMapCreator::create_obstacle_map() {
 void ObstacleMapCreator::process() {
     ros::Rate loop_rate(hz_);
 
-    //int i = 0;
-
     while (ros::ok()) {
         if (first_scan_done_) {
             obstacle_map_pub_.publish(obstacle_map_);
-            //ROS_INFO("pub");
             pub_obs_poses_.publish(obstacle_poses_);
         }
 
