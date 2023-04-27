@@ -44,6 +44,7 @@ private:
     bool is_map_initialized_ = false;
     bool first_odometry_got_ = false;
     bool second_odometry_got_ = false;
+    bool is_nearest_obstacle_record_ = false; //それぞれのスキャン角度において最も近い障害物の情報を記録したかを示す
 
     ros::NodeHandle nh_;
     ros::NodeHandle private_nh_;
@@ -51,6 +52,7 @@ private:
     ros::Subscriber odo_sub_;
     ros::Subscriber laser_sub_;
     ros::Publisher obstacle_map_pub_;
+    ros::Publisher pub_obs_poses_;
 
     sensor_msgs::LaserScan laser_scan_;
     nav_msgs::OccupancyGrid obstacle_map_;

@@ -9,6 +9,8 @@ ObstacleMapCreator::ObstacleMapCreator() : private_nh_("~") {
     odo_sub_ = nh_.subscribe("/roomba/odometry", 100, &ObstacleMapCreator::odo_callback, this);
     laser_sub_ = nh_.subscribe("scan", 10, &ObstacleMapCreator::laser_callback, this);
     obstacle_map_pub_ = nh_.advertise<nav_msgs::OccupancyGrid>("obstacle_map", 10);
+    pub_obs_poses_ = nh_.advertise<geometry_msgs::PoseArray>("obstacle", 1);
+
 
     obstacle_poses_.header.frame_id = "base_link";
     obstacle_map_.header.frame_id = "base_link";
@@ -102,6 +104,8 @@ bool ObstacleMapCreator::is_ignore_angle(double angle) {
 
 //スキャンによる障害物情報をobstacle_map_に反映する
 void ObstacleMapCreator::add_obstacles_to_map(double angle, double laser_range) {
+    is_nearest_obstacle_record_ = false; //障害物記録判定リセット
+
     if (!is_ignore_angle(angle)) { //angleが車体の柱の部分の場合、laser_rangeの値を無視して柱の影がobstacle_map_に映りこまないようにする
         laser_range = map_size_;
     }
@@ -187,6 +191,7 @@ void ObstacleMapCreator::process() {
         if (first_scan_done_) {
             obstacle_map_pub_.publish(obstacle_map_);
             //ROS_INFO("pub");
+            pub_obs_poses_.publish(obstacle_poses_);
         }
 
         ros::spinOnce();
