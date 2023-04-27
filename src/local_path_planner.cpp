@@ -252,6 +252,7 @@ std::vector<double> DWA::calc_input()
     //-----------スムージング関数の適用なし-----------
     if(smoothing_check_ == false)
     {
+        ROS_INFO_STREAM("----- Smoothing off -----");
 
         double max_score = -1000.0;  //評価値の最大値格納用
 
@@ -298,6 +299,7 @@ std::vector<double> DWA::calc_input()
     //-----------スムージング関数の適用あり-----------
     else if(smoothing_check_ == true)
     {
+        ROS_INFO_STREAM("----- Smoothing on -----");
         //並進速度と旋回速度のすべての組み合わせを評価
         for(double velocity=dw_.min_vel; velocity<=dw_.max_vel; velocity+=vel_step_)
         {
