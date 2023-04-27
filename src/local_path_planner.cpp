@@ -7,25 +7,25 @@
 
 DWA::DWA():private_nh_("~")
 {
-    private_nh_.param("hz", hz_, {10});
-    private_nh_.param("dt", dt_, {0.1});
-    private_nh_.param("goal_tolerance", goal_tolerance_, {0.1});
-    private_nh_.param("max_vel", max_vel_, {0.45});
-    private_nh_.param("min_vel", min_vel_, {0.0});
-    private_nh_.param("max_yawrate", max_yawrate_, {1.0});
-    private_nh_.param("max_accel", max_accel_, {1000.0});
-    private_nh_.param("max_yawaccel", max_yawaccel_, {1000.0});
-    private_nh_.param("predict_time", predict_time_, {3.0});
-    private_nh_.param("weight_heading", weight_heading_, {0.85});
-    private_nh_.param("weight_distance", weight_distance_, {1.5});
-    private_nh_.param("weight_velocity", weight_velocity_, {0.6});
-    private_nh_.param("search_range", search_range_, {0.95});
-    private_nh_.param("roomba_radius", roomba_radius_, {0.17});
-    private_nh_.param("radius_margin", radius_margin_, {0.1});
-    private_nh_.param("vel_step", vel_step_, {0.05});
-    private_nh_.param("yawrate_step", yawrate_step_, {0.1});
-    private_nh_.param("visualize_check", visualize_check_, {true});
-    private_nh_.param("smoothing_check", smoothing_check_, {false});
+    private_nh_.getParam("hz", hz_);
+    private_nh_.getParam("dt", dt_);
+    private_nh_.getParam("goal_tolerance", goal_tolerance_);
+    private_nh_.getParam("max_vel", max_vel_);
+    private_nh_.getParam("min_vel", min_vel_);
+    private_nh_.getParam("max_yawrate", max_yawrate_);
+    private_nh_.getParam("max_accel", max_accel_);
+    private_nh_.getParam("max_yawaccel", max_yawaccel_);
+    private_nh_.getParam("predict_time", predict_time_);
+    private_nh_.getParam("weight_heading", weight_heading_);
+    private_nh_.getParam("weight_distance", weight_distance_);
+    private_nh_.getParam("weight_velocity", weight_velocity_);
+    private_nh_.getParam("search_range", search_range_);
+    private_nh_.getParam("roomba_radius", roomba_radius_);
+    private_nh_.getParam("radius_margin", radius_margin_);
+    private_nh_.getParam("vel_step", vel_step_);
+    private_nh_.getParam("yawrate_step", yawrate_step_);
+    private_nh_.getParam("visualize_check", visualize_check_);
+    private_nh_.getParam("smoothing_check", smoothing_check_);
 
     //Subscriber
     sub_local_goal_ = nh_.subscribe("/local_goal", 1, &DWA::local_goal_callback, this);
