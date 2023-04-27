@@ -74,6 +74,9 @@ private:
     void expansion_reset();
 
     void publish_particles();
+    void publish_estimated_pose();
+
+    void broadcast_roomba_state();
 
 
     int hz_;
@@ -99,12 +102,13 @@ private:
 
     double alpha_;
     double alpha_th_;
+    double alpha_th_expansion_;
     double alpha_slow_;
     double alpha_fast_;
     double alpha_slow_th_;
     double alpha_fast_th_;
 
-    int expansion_count_;
+    int expansion_count_ = 0;
     int expansion_limit_;
     double expansion_reset_dev_;
 
@@ -114,6 +118,7 @@ private:
     bool map_got_ = false;
     bool laser_got_ = false;
     bool can_move_ = false;
+    bool is_visible_ = true;
 
     Particle estimated_pose_;
     std::vector<Particle> particles_;
