@@ -118,6 +118,7 @@ void DWA::calc_dynamic_window()
 void DWA::move_image(State& imstate, double velocity, double yawrate)
 {
     imstate.yaw += yawrate * dt_;
+    imstate.yaw  = optimize_angle(imstate.yaw);  //これだった？
     imstate.x += velocity * dt_ * cos(imstate.yaw);
     imstate.y += velocity * dt_ * sin(imstate.yaw);
     imstate.velocity = velocity;
