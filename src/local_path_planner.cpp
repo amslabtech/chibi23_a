@@ -13,6 +13,7 @@ DWA::DWA():private_nh_("~")
     private_nh_.getParam("max_vel", max_vel_);
     private_nh_.getParam("min_vel", min_vel_);
     private_nh_.getParam("max_yawrate", max_yawrate_);
+    private_nh_.getParam("vel_change_border_yawrate", vel_change_border_yawrate_);
     private_nh_.getParam("max_accel", max_accel_);
     private_nh_.getParam("max_yawaccel", max_yawaccel_);
     private_nh_.getParam("predict_time", predict_time_);
@@ -396,6 +397,10 @@ std::vector<double> DWA::calc_input()
     }
     // -------- スムージング関数適用はここまで
 
+    //旋回速度が出ているときは曲がるために並進速度を減速する
+    if(input[1] >= vel_change_border_yawrate_)
+        input[0] = vel_changer(input[0]);
+
     //現在速度の記録
     roomba_.velocity = input[0];
     roomba_.yawrate = input[1];
@@ -424,6 +429,14 @@ std::vector<double> DWA::calc_input()
     }
 
     return input;
+}
+
+//旋回速度を出すために並進速度を減速する
+double DWA::vel_changer(double velocity)
+{
+    if(velocity > 0.3)
+        velocity = 1.5;
+    return velocity;
 }
 
 //軌道の可視化

@@ -50,6 +50,7 @@ class DWA
         double calc_distance_eval(std::vector<State>& traj);  //distance(2項目)の評価関数を計算する
         double calc_velocity_eval(std::vector<State>& traj);  //velocity(3項目)の評価関数を計算する
         double optimize_angle(double theta);  //適切な角度(-M_PI~M_PI)に変換
+        double vel_changer(double velocity);  //旋回速度を出すために並進速度を減速する
         void visualize_traj(std::vector<State>& traj, const ros::Publisher& pub_local_path,ros::Time now);  //軌道を可視化
         void roomba_control(double velocity, double yawrate);  //roombaの制御入力
 
@@ -65,6 +66,7 @@ class DWA
         double min_vel_;     //最低並進速度[m/s]
         double max_vel_;     //最高並進速度[m/s]
         double max_yawrate_;  //最高旋回速度[rad/s]
+        double vel_change_border_yawrate_;  //vel_changerを使うかどうかの判定旋回速度[rad/s]
         double max_accel_;    //最高並進加速度[m/s^2]
         double max_yawaccel_;  //最高旋回加速度[rad/s^2]
         double predict_time_;  //軌道予測時間[s]
