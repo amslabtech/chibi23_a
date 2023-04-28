@@ -1,0 +1,20 @@
+hz: 10
+
+num: 600
+
+init_x: 0.0
+init_y: 0.0
+init_yaw: 0.0
+init_dev: 0.40
+
+laser_dev_per_dist: 0.10
+laser_step: 20
+laser_ignore_range: 0.20
+
+expansion_limit: 30
+expansion_reset_dev: 0.020
+
+alpha_th: 0.80
+alpha_th_expansion: 0.080
+alpha_slow_th: 0.001
+alpha_fast_th: 0.1
