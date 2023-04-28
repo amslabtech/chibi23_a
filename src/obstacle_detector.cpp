@@ -9,8 +9,8 @@ ObstacleMapCreator::ObstacleMapCreator() : private_nh_("~") {
     odo_sub_ = nh_.subscribe("/roomba/odometry", 100, &ObstacleMapCreator::odo_callback, this);
     laser_sub_ = nh_.subscribe("scan", 10, &ObstacleMapCreator::laser_callback, this);
     obstacle_map_pub_ = nh_.advertise<nav_msgs::OccupancyGrid>("obstacle_map", 10);
-//    pub_obs_poses_ = nh_.advertise<geometry_msgs::PoseArray>("/local_map/obstacle", 1);
-    pub_obs_poses_ = nh_.advertise<geometry_msgs::PoseArray>("/local_map/obstacle", 1);
+//    pub_obs_poses_ = nh_.advertise<geometry_msgs::PoseArray>("obstacle_poses", 1); //システム図と同一のトピック名
+    pub_obs_poses_ = nh_.advertise<geometry_msgs::PoseArray>("/local_map/obstacle", 1); //先輩のソースコードと同一のトピック名
 
 
     obstacle_poses_.header.frame_id = "base_link";
