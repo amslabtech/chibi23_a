@@ -48,19 +48,63 @@ void AstarPath::map_callback(const nav_msgs::OccupancyGrid::ConstPtr &msg)
         map_col_length = the_map.info.width;           //col_count = 4000
         map_grid = vector<vector<int>>(map_row_length,vector<int>(map_col_length,0));
 
-        //change 1D the_map to 2D
-        for(int i=0; i<map_row_length; i++)
-        {
-            for(int j=0; j<map_col_length; j++)
-            {
-                map_grid[i][j] = the_map.data[i+j*map_row_length];
-            }
-        }
+        // //change 1D the_map to 2D
+        // for(int i=0; i<map_row_length; i++)
+        // {
+        //     for(int j=0; j<map_col_length; j++)
+        //     {
+        //         map_grid[i][j] = the_map.data[i+j*map_row_length];
+        //     }
+        // }
+
+				update_map();
+
         // origin mean point which is edge of left down
         origin.first = the_map.info.origin.position.x;      //origin.first = -100
         origin.second = the_map.info.origin.position.y;      //origin.first = -100
 				map_check = true;
     }
+}
+
+// マップ上にある障害物を分厚くして、ロボット本体の分のマージンを確保する
+void AstarPath::update_map()
+{
+		// 100の値を持つ要素とその隣接要素のインデックスを格納するベクターを作成
+		vector<pair<int, int>> indices_to_update;
+
+		// 100の値を持つ要素とその隣接要素を見つける
+		for (int i = 0; i < map_row_length; i++) {
+				for (int j = 0; j < map_col_length; j++) {
+						if (the_map.data[i + j * map_row_length] == 100) {
+								// 100の値を持つ要素のインデックスを格納
+								indices_to_update.push_back({i, j});
+								
+								// 上の隣接要素のインデックスを格納
+								if (i > 0) indices_to_update.push_back({i - 1, j});
+								
+								// 下の隣接要素のインデックスを格納
+								if (i < map_row_length - 1) indices_to_update.push_back({i + 1, j});
+								
+								// 左の隣接要素のインデックスを格納
+								if (j > 0) indices_to_update.push_back({i, j - 1});
+								
+								// 右の隣接要素のインデックスを格納
+								if (j < map_col_length - 1) indices_to_update.push_back({i, j + 1});
+						}
+				}
+		}
+
+		// the_mapからmap_gridへ要素をコピー
+		for (int i = 0; i < map_row_length; i++) {
+				for (int j = 0; j < map_col_length; j++) {
+						map_grid[i][j] = the_map.data[i + j * map_row_length];
+				}
+		}
+
+		// 格納されたインデックスの要素をmap_gridで100に更新
+		for (const auto& index_pair : indices_to_update) {
+				map_grid[index_pair.first][index_pair.second] = 100;
+		}
 }
 
 vector<pair<int, int>> neighbors = {{-1, 0}, {1, 0}, {0, -1}, {0, 1}};
@@ -132,6 +176,7 @@ vector<pair<int, int>> AstarPath::path_for_multi_goal() {
 		}
 		return path;
 }
+
 
 // global_path を global_path_msgs に変換する
 // - globalpath.first -> global_path_msgs.pose.position.x, global_path.second -> global_path_msgs.pose.position.y
