@@ -39,6 +39,7 @@ class AstarPath
     bool                    isValid(int x, int y, int rows, int cols);
     double                  heuristic(int x1, int y1, int x2, int y2);
     void                    map_callback(const nav_msgs::OccupancyGrid::ConstPtr &msg);
+    void                    update_map();
     void                    assign_global_path_msgs();
 
     int hz;
