@@ -666,8 +666,8 @@ void Localizer::broadcast_roomba_state()
     roomba_state.header.stamp = ros::Time::now();
 
     roomba_state.header.frame_id = "map";
-    // roomba_state.child_frame_id = "odom";  //gitのやつがうまくいかなかったらこれ使う　1行下はコメントアウト
-    roomba_state.child_frame_id = "roomba6/odom";
+    roomba_state.child_frame_id = "odom";  //gitのやつがうまくいかなかったらこれ使う　1行下はコメントアウト
+    // roomba_state.child_frame_id = "roomba4/odom";  //うまくいかんかった…
 
     roomba_state.transform.translation.x = roomba_state_x;
     roomba_state.transform.translation.y = roomba_state_y;
