@@ -1,11 +1,14 @@
 #trueならパスを可視化
 visualize_check: true
 
+#trueならスムージング関数を適用
+smoothing_score: false
+
 #制御ループ周波数
 hz: 10  #ループ周波数[Hz]
 
 #速度制限(Dynamic Window関連)
-max_vel: 0.45  #最高並進速度[m/s]
+max_vel: 0.40  #最高並進速度[m/s]
 min_vel: 0.0  #最低並進速度[m/s]
 max_yawrate: 1.0 #最高旋回速度[rad/s]
 
@@ -26,9 +29,9 @@ roomba_radius: 0.17  #ルンバの半径
 radius_margin: 0.1  #衝突半径の予測
 
 #重み定数
-weight_heading: 0.85  #評価関数1項目(heading)
-weight_distance: 1.5  #評価関数2項目(distance)
-weight_velocity: 0.6  #評価関数3項目(velocity)
+weight_heading: 1.5  #評価関数1項目(heading)
+weight_distance: 2.0  #評価関数2項目(distance)
+weight_velocity: 0.5  #評価関数3項目(velocity)
 
 #許容誤差[m]
 goal_tolerance: 0.5  #waypoints_に対する許容誤差

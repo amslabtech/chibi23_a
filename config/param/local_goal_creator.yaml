@@ -1,0 +1,9 @@
+#制御ループ周波数
+hz: 10  #ループ周波数[Hz]
+
+#ローカルゴールを更新する距離
+dist_to_update_local_goal: 1.5  #現在位置とローカルゴールの距離[m]
+
+#global_pathのインデックス
+global_path_index: 50  #ローカルゴール設定に使うglobal_pathのインデックスの初期値
+index_step: 10  #1回で更新するインデックス数
