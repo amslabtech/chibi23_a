@@ -80,6 +80,9 @@ class DWA
         double yawrate_step_;  //最適な旋回速度を計算するときの刻み幅[rad/s]
         bool visualize_check_;  //パスを可視化するかどうかの設定用
         bool smoothing_check_;  //スムージング関数を適用するかどうかの設定用
+        int stop_counter_;  //ルンバの出力値が(0,0)になっているループ数カウント用
+        int stop_time_;  //ルンバの出力値が(0,0)になってから動き出すまでのループ数
+        int move_time_;  //ルンバの出力値が(0,0)を選択できないループ数
 
         //msgの受け取り判定用
         bool flag_local_goal_ = false;

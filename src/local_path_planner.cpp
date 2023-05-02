@@ -27,6 +27,9 @@ DWA::DWA():private_nh_("~")
     private_nh_.getParam("yawrate_step", yawrate_step_);
     private_nh_.getParam("visualize_check", visualize_check_);
     private_nh_.getParam("smoothing_check", smoothing_check_);
+    private_nh_.getParam("stop_counter", stop_counter_);
+    private_nh_.getParam("stop_time", stop_time_);
+    private_nh_.getParam("move_time", move_time_);
 
     //Subscriber
     sub_local_goal_ = nh_.subscribe("/local_goal", 1, &DWA::local_goal_callback, this);
@@ -254,8 +257,6 @@ std::vector<double> DWA::calc_input()
     //-----------スムージング関数の適用なし-----------
     if(smoothing_check_ == false)
     {
-        ROS_INFO_STREAM("----- Smoothing off -----");
-
         double max_score = -1000.0;  //評価値の最大値格納用
 
         //並進速度と旋回速度のすべての組み合わせを評価
@@ -276,11 +277,14 @@ std::vector<double> DWA::calc_input()
                 //評価値が一番大きいデータの探索
                 if(max_score < one_score)
                 {
-                    max_score = one_score;
-                    input[0] = velocity;
-                    input[1] = yawrate;
-                    max_score_index = j;
-                    // ROS_INFO("update max_score");  //デバック用
+                    if(!((stop_counter_ > 0) && (i == 0) && (j == 0)))
+                    {
+                        max_score = one_score;
+                        input[0] = velocity;
+                        input[1] = yawrate;
+                        max_score_index = j;
+                        // ROS_INFO("update max_score");  //デバック用
+                    }
                 }
 
                 j++;
@@ -301,7 +305,6 @@ std::vector<double> DWA::calc_input()
     //-----------スムージング関数の適用あり-----------
     else if(smoothing_check_ == true)
     {
-        ROS_INFO_STREAM("----- Smoothing on -----");
         //並進速度と旋回速度のすべての組み合わせを評価
         for(double velocity=dw_.min_vel; velocity<=dw_.max_vel; velocity+=vel_step_)
         {
@@ -326,7 +329,7 @@ std::vector<double> DWA::calc_input()
             if(i == 0)
             {
                 yawrate_size = j;
-                ROS_INFO("yawrate_size = %d", yawrate_size);  //デバック用
+                // ROS_INFO("yawrate_size = %d", yawrate_size);  //デバック用
             }
 
             i++;
@@ -336,7 +339,7 @@ std::vector<double> DWA::calc_input()
 
         //velocityの分割個数を格納
         vel_size = i;
-        ROS_INFO("vel_size = %d", vel_size);  //デバック用
+        // ROS_INFO("vel_size = %d", vel_size);  //デバック用
 
         //評価値に対してスムージング関数を適用
         double smoothing_score;  //スムージング関数適用後評価値格納用
@@ -350,8 +353,6 @@ std::vector<double> DWA::calc_input()
         int max_vel_score_index = 0;  //評価値が最大となる速度のインデックス格納用
         int max_yawrate_score_index = 0;  //評価値が最大となる旋回速度のインデックス格納用
 
-        // ROS_INFO("kokomade dekiteruyo!");  //デバック用
-
         for(i=0; i<vel_size; i++)  //隣接するデータ数が減ってしまう端のデータは使わない
         {
             for(j=0; j<yawrate_size; j++)
@@ -359,7 +360,7 @@ std::vector<double> DWA::calc_input()
                 score_sum = 0.0;
                 int l = 0;  //カウンタ変数
 
-                ROS_INFO("scores[%d][%d] = %lf", i, j, scores[i][j]);  //デバッグ用
+                // ROS_INFO("scores[%d][%d] = %lf", i, j, scores[i][j]);  //デバッグ用
 
                 for(int m=i-1; m<=i+1; m++)
                 {
@@ -377,17 +378,20 @@ std::vector<double> DWA::calc_input()
                 if(l != 0)
                 {
                     smoothing_score = score_sum / l;
-                    ROS_INFO("smoothing_score = %lf", smoothing_score);  //デバック用
+                    // ROS_INFO("smoothing_score = %lf", smoothing_score);  //デバック用
                 }
 
                 //評価値が一番大きいデータの探索
                 if(max_score < smoothing_score)
                 {
-                    max_score = smoothing_score;
-                    max_vel_score_index = i;
-                    max_yawrate_score_index = j;
-                    max_score_index = k;
-                    // ROS_INFO("update max_score");  //デバック用
+                    if(!((stop_counter_ > 0) && (i == 0) && (j == 0)))
+                    {
+                        max_score = smoothing_score;
+                        max_vel_score_index = i;
+                        max_yawrate_score_index = j;
+                        max_score_index = k;
+                        // ROS_INFO("update max_score");  //デバック用
+                    }
                 }
 
                 k++;
@@ -396,12 +400,12 @@ std::vector<double> DWA::calc_input()
 
         // ROS_INFO("get smoothing_score!");  //デバック用
 
-        ROS_INFO("max_score_index: %d", max_score_index);  //デバック用
-        ROS_INFO("max_score: %lf", max_score);  //デバック用
+        // ROS_INFO("max_score_index: %d", max_score_index);  //デバック用
+        // ROS_INFO("max_score: %lf", max_score);  //デバック用
 
         //最適な制御入力を格納
-        ROS_INFO("max_vel_score_index: %d", max_vel_score_index);  //デバック用
-        ROS_INFO("max_yawrate_score_index: %d", max_yawrate_score_index);  //デバック用
+        // ROS_INFO("max_vel_score_index: %d", max_vel_score_index);  //デバック用
+        // ROS_INFO("max_yawrate_score_index: %d", max_yawrate_score_index);  //デバック用
 
         input[0] = dw_.min_vel + vel_step_ * (max_vel_score_index);
         input[1] = dw_.min_yawrate + yawrate_step_ * (max_yawrate_score_index);
@@ -488,6 +492,12 @@ void DWA::process()
     ros::Rate loop_rate(hz_);
     tf2_ros::TransformListener tf_listener(tf_buffer_);  //local_goal_の情報を取得
 
+    //スムージング関数が適用されているかの確認用
+    if(smoothing_check_ == true)
+        ROS_INFO_STREAM("----- Smoothing on -----");
+    else if(smoothing_check_ == false)
+        ROS_INFO_STREAM("----- Smoothing off -----");
+
     while(ros::ok())
     {
         if(goal_check())
@@ -497,6 +507,12 @@ void DWA::process()
             std::vector<double> input = calc_input();
             roomba_control(input[0], input[1]);
             // ROS_INFO("yattane!");  //デバック用
+
+            if((input[0] == 0.0) && (input[1] == 0.0))
+                stop_counter_ ++;
+
+            if(stop_counter_ > stop_time_+move_time_)
+                stop_counter_ = 0;
         }
         else
         {

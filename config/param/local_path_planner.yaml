@@ -2,7 +2,7 @@
 visualize_check: true
 
 #trueならスムージング関数を適用
-smoothing_check: false
+smoothing_check: true
 
 #制御ループ周波数
 hz: 10  #ループ周波数[Hz]
@@ -41,3 +41,8 @@ goal_tolerance: 0.5  #waypoints_に対する許容誤差
 
 #評価関数2項目(distance)で探索する範囲[m]
 search_range: 0.95
+
+#障害物で止まってしまった後に動き出す
+stop_counter: 0  #停止しているループ数
+stop_time: 5  #停止してから動き出すまでのループ数
+move_time: 10  #停止を選択できないループ数
