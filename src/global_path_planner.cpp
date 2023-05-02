@@ -11,10 +11,10 @@ AstarPath::AstarPath():private_nh("~")
 		// FIXME: 関数に処理を分割したい
 		vector<double> start_param;
 		private_nh.getParam("/global_path_planner/start_param", start_param);
-    cout << "size: " << start_param.size() << endl;
+    // cout << "size: " << start_param.size() << endl;
 		start_position.first = start_param[0];
 		start_position.second = start_param[1];
-    cout << "start.x = " << start_param[0] << '\n' << "start.y = " << start_param[1] << endl;
+    // cout << "start.x = " << start_param[0] << '\n' << "start.y = " << start_param[1] << endl;
 
 		vector<double> goal_x_params;
 		vector<double> goal_y_params;
@@ -24,11 +24,11 @@ AstarPath::AstarPath():private_nh("~")
 
 		if (goal_x_params.size( ) != goal_y_params.size()) ROS_ERROR("goals_x and goals_y are not same size");
 
-    cout << "size.x: " << goal_x_params.size() << "size.y: " << goal_y_params.size() << endl;
+    // cout << "size.x: " << goal_x_params.size() << "size.y: " << goal_y_params.size() << endl;
 		for( int i=0; i<goal_x_params.size(); ++i ) {
 							goal_positions.push_back({ goal_x_params[i], goal_y_params[i] });
-              cout << "x.pos" << i << "=" << goal_positions[i].first << endl;
-              cout << "y.pos" << i << "=" << goal_positions[i].second << endl;
+              // cout << "x.pos" << i << "=" << goal_positions[i].first << endl;
+              // cout << "y.pos" << i << "=" << goal_positions[i].second << endl;
 		 }
 }
 
@@ -42,7 +42,7 @@ void AstarPath::map_callback(const nav_msgs::OccupancyGrid::ConstPtr &msg)
     else
     {
         the_map = *msg;
-        cout << "raw map resolution data: " << the_map.info.resolution << endl;
+        // cout << "raw map resolution data: " << the_map.info.resolution << endl;
 				map_resolution = the_map.info.resolution;      // マップの解像度を設定する
         map_row_length = the_map.info.height;          //row_count = 4000
         map_col_length = the_map.info.width;           //col_count = 4000
@@ -68,16 +68,16 @@ void AstarPath::update_map()
 						if (the_map.data[i + j * map_row_length] == 100) {
 								// 100の値を持つ要素のインデックスを格納
 								indices_to_update.push_back({i, j});
-								
+
 								// 上の隣接要素のインデックスを格納
 								if (i > 0) indices_to_update.push_back({i - 1, j});
-								
+
 								// 下の隣接要素のインデックスを格納
 								if (i < map_row_length - 1) indices_to_update.push_back({i + 1, j});
-								
+
 								// 左の隣接要素のインデックスを格納
 								if (j > 0) indices_to_update.push_back({i, j - 1});
-								
+
 								// 右の隣接要素のインデックスを格納
 								if (j < map_col_length - 1) indices_to_update.push_back({i, j + 1});
 						}
@@ -124,8 +124,8 @@ vector<pair<int, int>> AstarPath::a_star(vector<vector<int>> &map_grid, pair<int
 		open_set.pop(); // 取り出した要素を削除する
 		int x = current.x, y = current.y;
 
-
-  cout << "goal_first: " << goal.first << endl;
+  //cout << "goal_first: " << goal.first << endl;
+  //cout << "goal_second: " << goal.second << endl;
 		if (x == goal.first && y == goal.second) {
 			vector<pair<int, int>> path;
 			while (x != start.first || y != start.second) {
@@ -140,6 +140,9 @@ vector<pair<int, int>> AstarPath::a_star(vector<vector<int>> &map_grid, pair<int
 		if (visited[x][y]) continue;
 		visited[x][y] = true;
 
+    // cout << "x: " << x << endl;
+    // cout << "y: " << y << endl;
+
 		for (auto &neighbor : neighbors) {
 			int nx = x + neighbor.first, ny = y + neighbor.second;
 
@@ -151,6 +154,8 @@ vector<pair<int, int>> AstarPath::a_star(vector<vector<int>> &map_grid, pair<int
 			}
 		}
 	}
+
+  cout << "path could not be found!!!!" << endl;
 
 	return {};  // 経路が見つからない場合、空のベクタを返す
 }
@@ -174,7 +179,7 @@ void AstarPath::assign_global_path_msgs()
 {
 	for(auto &p : global_path)
 	{
-	  printf("x=%lf, y=%lf, \n",( p.first - oringin_node.first)* map_resolution,( p.second - oringin_node.second) * map_resolution); // デバッグ用a
+	  printf("x=%lf, y=%lf, \n",( p.first - origin_node.first)* map_resolution,( p.second - origin_node.second) * map_resolution); // デバッグ用a
 		geometry_msgs::PoseStamped global_path_point;
 		global_path_point.pose.position.x = (p.first - origin_node.first) * map_resolution;
 		global_path_point.pose.position.y = (p.second - origin_node.second) * map_resolution;
@@ -191,17 +196,20 @@ void AstarPath::assign_global_path_msgs()
 
 void AstarPath::convert_map_position_to_node_index()
 {
-	oringin_node.first = (origin.first / map_resolution);
-	oringin_node.second = (origin.second / map_resolution);
-  cout << "map_resolution: " << map_resolution << endl;
-	start.first = (start_position.first / map_resolution) + oringin_node.first;
-  cout << "pose.x: " << start_position.first << endl;
-  cout << "start: " << (start_position.first / map_resolution) + oringin_node.second << endl;
-	start.second = (start_position.second / map_resolution) + oringin_node.second;
+	origin_node.first = abs(origin.first / map_resolution);
+	origin_node.second = abs(origin.second / map_resolution);
+  // cout << "origin_node.first: " << origin_node.first << endl;
+  // cout << "origin node.second: " << origin_node.second << endl;
+  //cout << "map_resolution: " << map_resolution << endl;
+	start.first = (start_position.first / map_resolution) + origin_node.first;
+  //cout << "pose.x: " << start_position.first << endl;
+  //cout << "start: " << (start_position.first / map_resolution) + origin_node.second << endl;
+	start.second = (start_position.second / map_resolution) + origin_node.second;
 
 	for(auto &goal : goal_positions)
 	{
-		goals.push_back({ (goal.first / map_resolution) + oringin_node.first, (goal.second / map_resolution) + oringin_node.second});
+		goals.push_back({ (goal.first / map_resolution) + origin_node.first, (goal.second / map_resolution) + origin_node.second});
+    cout << "goals: " << (goal.first / map_resolution) + origin_node.first << endl;
 	}
 }
 
