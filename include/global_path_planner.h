@@ -45,7 +45,8 @@ class AstarPath
     int hz;
     vector<vector<int>>    map_grid;
     vector<pair<int, int>> global_path;
-    pair<int, int>         origin; // マップの原点
+    pair<double, double>         origin; // マップの原点
+    pair<int, int>         origin_node;
     bool                   map_check;
     pair<double, double>         start_position;
     vector<pair<double, double>> goal_positions;

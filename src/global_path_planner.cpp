@@ -46,22 +46,12 @@ void AstarPath::map_callback(const nav_msgs::OccupancyGrid::ConstPtr &msg)
 				map_resolution = the_map.info.resolution;      // マップの解像度を設定する
         map_row_length = the_map.info.height;          //row_count = 4000
         map_col_length = the_map.info.width;           //col_count = 4000
-        map_grid = vector<vector<int>>(map_row_length,vector<int>(map_col_length,0));
-
-        // //change 1D the_map to 2D
-        // for(int i=0; i<map_row_length; i++)
-        // {
-        //     for(int j=0; j<map_col_length; j++)
-        //     {
-        //         map_grid[i][j] = the_map.data[i+j*map_row_length];
-        //     }
-        // }
-
-				update_map();
-
-        // origin mean point which is edge of left down
+				// origin mean point which is edge of left down
         origin.first = the_map.info.origin.position.x;      //origin.first = -100
         origin.second = the_map.info.origin.position.y;      //origin.first = -100
+        map_grid = vector<vector<int>>(map_row_length,vector<int>(map_col_length,0));
+
+				update_map();
 				map_check = true;
     }
 }
@@ -184,10 +174,10 @@ void AstarPath::assign_global_path_msgs()
 {
 	for(auto &p : global_path)
 	{
-	  printf("x=%lf, y=%lf, \n",( p.first - map_row_length/2 )* map_resolution,( p.second - map_col_length /2) * map_resolution); // デバッグ用a
+	  printf("x=%lf, y=%lf, \n",( p.first - oringin_node.first)* map_resolution,( p.second - oringin_node.second) * map_resolution); // デバッグ用a
 		geometry_msgs::PoseStamped global_path_point;
-		global_path_point.pose.position.x = (p.first - map_row_length / 2) * map_resolution;
-		global_path_point.pose.position.y = (p.second - map_col_length / 2) * map_resolution;
+		global_path_point.pose.position.x = (p.first - origin_node.first) * map_resolution;
+		global_path_point.pose.position.y = (p.second - origin_node.second) * map_resolution;
 		global_path_point.pose.position.z = 0;
 		global_path_point.pose.orientation.x = 0;
 		global_path_point.pose.orientation.y = 0;
@@ -201,15 +191,17 @@ void AstarPath::assign_global_path_msgs()
 
 void AstarPath::convert_map_position_to_node_index()
 {
+	oringin_node.first = (origin.first / map_resolution);
+	oringin_node.second = (origin.second / map_resolution);
   cout << "map_resolution: " << map_resolution << endl;
-	start.first = (start_position.first / map_resolution) + (map_row_length / 2);
+	start.first = (start_position.first / map_resolution) + oringin_node.first;
   cout << "pose.x: " << start_position.first << endl;
-  cout << "start: " << (start_position.first / map_resolution) + (map_row_length / 2) << endl;
-	start.second = (start_position.second / map_resolution) + (map_col_length / 2);
+  cout << "start: " << (start_position.first / map_resolution) + oringin_node.second << endl;
+	start.second = (start_position.second / map_resolution) + oringin_node.second;
 
 	for(auto &goal : goal_positions)
 	{
-		goals.push_back({ (goal.first / map_resolution) + (map_row_length / 2), (goal.second / map_resolution) + (map_col_length / 2 )});
+		goals.push_back({ (goal.first / map_resolution) + oringin_node.first, (goal.second / map_resolution) + oringin_node.second});
 	}
 }
 
