@@ -277,7 +277,7 @@ std::vector<double> DWA::calc_input()
                 //評価値が一番大きいデータの探索
                 if(max_score < one_score)
                 {
-                    if(!((stop_counter_ > 0) && (i == 0) && (j == 0)))
+                    if(!((stop_counter_ > 0) && (velocity == 0) && (yawrate == 0)))
                     {
                         max_score = one_score;
                         input[0] = velocity;
