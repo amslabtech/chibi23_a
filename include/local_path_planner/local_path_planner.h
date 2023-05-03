@@ -45,12 +45,12 @@ class DWA
         //引数あり関数
         void move_image(State& imstate, double velocity, double yawrate);  //仮想ロボットを移動
         std::vector<State> predict_trajectory(double velocity, double yawrate);  //予測軌道を作成
-        double calc_evaluation(std::vector<State>& traj);  //評価関数を計算する
+        double calc_evaluation(std::vector<State>& traj, double yawrate);  //評価関数を計算する
         double calc_heading_eval(std::vector<State>& traj);  //heading(1項目)の評価関数を計算する
         double calc_distance_eval(std::vector<State>& traj);  //distance(2項目)の評価関数を計算する
         double calc_velocity_eval(std::vector<State>& traj);  //velocity(3項目)の評価関数を計算する
+        double calc_yawrate_eval(double yawrate);  //左右交互にパスを選択しないようにする(評価関数4項目)
         double optimize_angle(double theta);  //適切な角度(-M_PI~M_PI)に変換
-        double vel_changer(double velocity);  //旋回速度を出すために並進速度を減速する
         void visualize_traj(std::vector<State>& traj, const ros::Publisher& pub_local_path,ros::Time now);  //軌道を可視化
         void roomba_control(double velocity, double yawrate);  //roombaの制御入力
 
@@ -66,13 +66,13 @@ class DWA
         double min_vel_;     //最低並進速度[m/s]
         double max_vel_;     //最高並進速度[m/s]
         double max_yawrate_;  //最高旋回速度[rad/s]
-        double vel_change_border_yawrate_;  //vel_changerを使うかどうかの判定旋回速度[rad/s]
         double max_accel_;    //最高並進加速度[m/s^2]
         double max_yawaccel_;  //最高旋回加速度[rad/s^2]
         double predict_time_;  //軌道予測時間[s]
         double weight_heading_;  //評価関数1項目　重みづけ定数
         double weight_distance_;  //評価関数2項目　重みづけ定数
         double weight_velocity_;  //評価関数3項目　重みづけ定数
+        double weight_yawrate_;  //評価関数4項目　重みづけ定数
         double search_range_;  //評価関数２項目(distance)探索範囲[m]
         double roomba_radius_;  //ルンバの半径[m]
         double radius_margin_;  //衝突半径の余白[m]

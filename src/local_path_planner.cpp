@@ -13,13 +13,13 @@ DWA::DWA():private_nh_("~")
     private_nh_.getParam("max_vel", max_vel_);
     private_nh_.getParam("min_vel", min_vel_);
     private_nh_.getParam("max_yawrate", max_yawrate_);
-    private_nh_.getParam("vel_change_border_yawrate", vel_change_border_yawrate_);
     private_nh_.getParam("max_accel", max_accel_);
     private_nh_.getParam("max_yawaccel", max_yawaccel_);
     private_nh_.getParam("predict_time", predict_time_);
     private_nh_.getParam("weight_heading", weight_heading_);
     private_nh_.getParam("weight_distance", weight_distance_);
     private_nh_.getParam("weight_velocity", weight_velocity_);
+    private_nh_.getParam("weight_yawrate", weight_yawrate_);
     private_nh_.getParam("search_range", search_range_);
     private_nh_.getParam("roomba_radius", roomba_radius_);
     private_nh_.getParam("radius_margin", radius_margin_);
@@ -146,7 +146,7 @@ std::vector<State> DWA::predict_trajectory(double velocity, double yawrate)
 }
 
 //評価関数を計算する
-double DWA::calc_evaluation(std::vector<State>& traj)
+double DWA::calc_evaluation(std::vector<State>& traj, double yawrate)
 {
     double heading_value = weight_heading_ * calc_heading_eval(traj);
     // ROS_INFO("calc heading_value success!");  //デバック用
@@ -154,8 +154,9 @@ double DWA::calc_evaluation(std::vector<State>& traj)
     // ROS_INFO("calc distance_value success!");  //デバック用
     double velocity_value = weight_velocity_ * calc_velocity_eval(traj);
     // ROS_INFO("calc velocity_value success!");  //デバック用
+    double yawrate_value = weight_yawrate_ * calc_yawrate_eval(yawrate);
 
-    double total_score = heading_value + distance_value + velocity_value;
+    double total_score = heading_value + distance_value + velocity_value + yawrate_value;
     // ROS_INFO("calc total_score success!");  //デバック用
 
     return total_score;
@@ -221,6 +222,30 @@ double DWA::calc_velocity_eval(std::vector<State>& traj)
         return 0.0;
 }
 
+//左右交互にパスを選択しないようにする(評価関数4項目)
+double DWA::calc_yawrate_eval(double yawrate)
+{
+    int yawrate_sign = 0;
+    int tmp_yawrate_sign = 0;
+
+    if(yawrate >= 0.0)
+        yawrate_sign = 1;
+
+    if(roomba_.yawrate >= 0.0)
+        tmp_yawrate_sign = 1;
+
+    double yawrate_diff = std::max(yawrate, roomba_.yawrate);
+
+    double yawrate_eval = 0.0;
+
+    if((yawrate_sign != tmp_yawrate_sign) && (yawrate_diff >= 0.4))
+        yawrate_eval = -2.0;
+    else
+        yawrate_eval = 0.0;
+
+    return yawrate_eval;
+}
+
 //適切な角度(-M_PI~M_PI)に変換
 double DWA::optimize_angle(double theta)
 {
@@ -267,7 +292,7 @@ std::vector<double> DWA::calc_input()
                 std::vector<State> traj = predict_trajectory(velocity, yawrate);  //予測軌道を生成
                 // ROS_INFO("create predict_trajectory success!");  //デバック用
 
-                one_score = calc_evaluation(traj);  //予測軌道に評価関数を適用
+                one_score = calc_evaluation(traj, yawrate);  //予測軌道に評価関数を適用
                 score_yawrate.push_back(one_score);
                 // ROS_INFO("velocity: %lf", velocity);  //デバック用
                 // ROS_INFO("yawrate : %lf", yawrate);  //デバック用
@@ -277,14 +302,14 @@ std::vector<double> DWA::calc_input()
                 //評価値が一番大きいデータの探索
                 if(max_score < one_score)
                 {
-                    if(!((stop_counter_ > 0) && (velocity == 0) && (yawrate == 0)))
-                    {
-                        max_score = one_score;
-                        input[0] = velocity;
-                        input[1] = yawrate;
-                        max_score_index = j;
-                        // ROS_INFO("update max_score");  //デバック用
-                    }
+                    if((stop_counter_ > 0) && (velocity < vel_step_*0.5) && (abs(yawrate) < yawrate_step_*2.0))
+                        continue;
+
+                    max_score = one_score;
+                    input[0] = velocity;
+                    input[1] = yawrate;
+                    max_score_index = j;
+                    // ROS_INFO("update max_score");  //デバック用
                 }
 
                 j++;
@@ -313,7 +338,7 @@ std::vector<double> DWA::calc_input()
                 std::vector<State> traj = predict_trajectory(velocity, yawrate);  //予測軌道を生成
                 // ROS_INFO("create predict_trajectory success!");  //デバック用
 
-                one_score = calc_evaluation(traj);  //予測軌道に評価関数を適用
+                one_score = calc_evaluation(traj, yawrate);  //予測軌道に評価関数を適用
                 score_yawrate.push_back(one_score);
                 // ROS_INFO("velocity: %lf", velocity);  //デバック用
                 // ROS_INFO("yawrate : %lf", yawrate);  //デバック用
@@ -384,6 +409,7 @@ std::vector<double> DWA::calc_input()
                 //評価値が一番大きいデータの探索
                 if(max_score < smoothing_score)
                 {
+                    // if((stop_counter_ > 0) && (i < 0.5) && (abs(yawrate) < yawrate_step_*2.0))  //後で直す
                     if(!((stop_counter_ > 0) && (i == 0) && (j == 0)))
                     {
                         max_score = smoothing_score;
@@ -420,8 +446,8 @@ std::vector<double> DWA::calc_input()
     roomba_.velocity = input[0];
     roomba_.yawrate = input[1];
 
-    // ROS_INFO("roomba_.velocity: %lf", roomba_.velocity);  //デバック用
-    // ROS_INFO("roomba_.yawrate : %lf", roomba_.yawrate);  //デバック用
+    ROS_INFO("roomba_.velocity: %lf", roomba_.velocity);  //デバック用
+    ROS_INFO("roomba_.yawrate : %lf", roomba_.yawrate);  //デバック用
 
     //パスを可視化して適切なパスが選択できているかを評価
     if(visualize_check_ == true)
@@ -444,14 +470,6 @@ std::vector<double> DWA::calc_input()
     }
 
     return input;
-}
-
-//旋回速度を出すために並進速度を減速する
-double DWA::vel_changer(double velocity)
-{
-    if(velocity > 0.3)
-        velocity = 1.5;
-    return velocity;
 }
 
 //軌道の可視化
@@ -505,10 +523,15 @@ void DWA::process()
         {
             // ROS_INFO("calc_input start");  //デバック用
             std::vector<double> input = calc_input();
+
+            //roomba4が右にそれるのを防ぐ
+            if((input[0] > 0.2) && (abs(input[1]) <= yawrate_step_*0.5))
+                input[1] += 0.3;
+
             roomba_control(input[0], input[1]);
             // ROS_INFO("yattane!");  //デバック用
 
-            if((input[0] == 0.0) && (input[1] == 0.0))
+            if((input[0] < vel_step_*0.5) && (abs(input[1]) < yawrate_step_))
                 stop_counter_ ++;
 
             if(stop_counter_ > stop_time_+move_time_)
