@@ -7,16 +7,16 @@ smoothing_check: false
 #制御ループ周波数
 hz: 10  #ループ周波数[Hz]
 
-#----- 障害物回避実験用 -----
+#----- D館1周用 -----
 
 #速度制限(Dynamic Window関連)
-max_vel: 0.2  #最高並進速度[m/s]
+max_vel: 0.25  #最高並進速度[m/s]
 min_vel: 0.0  #最低並進速度[m/s]
 max_yawrate: 1.0 #最高旋回速度[rad/s]
 
 #加速度制限(Dynamic Window関連)
-max_accel: 1.0  #最高並進加速度[m/s^2]
-max_yawaccel: 1.0  #最高旋回加速度[m/s^2]
+max_accel: 10.0  #最高並進加速度[m/s^2]
+max_yawaccel: 10.0  #最高旋回加速度[m/s^2]
 
 #速度解像度
 vel_step: 0.05
@@ -24,15 +24,15 @@ yawrate_step: 0.1
 
 #時間[s]
 dt: 0.1  #微小時間
-predict_time: 5.0  #軌道予測時間[s]
+predict_time: 3.0  #軌道予測時間[s]
 
 #機体サイズ(半径)[m]
 roomba_radius: 0.25  #ルンバの半径
 radius_margin: 0.1  #衝突半径の予測
 
 #重み定数
-weight_heading: 0.8  #評価関数1項目(heading)
-weight_distance: 1.5  #評価関数2項目(distance)
+weight_heading: 1.5  #評価関数1項目(heading)
+weight_distance: 2.0  #評価関数2項目(distance)
 weight_velocity: 1.0  #評価関数3項目(velocity)
 weight_yawrate: 1.0  #評価関数4項目(yawrate)
 
@@ -46,3 +46,43 @@ search_range: 0.95
 stop_counter: 0  #停止しているループ数
 stop_time: 5  #停止してから動き出すまでのループ数
 move_time: 30  #停止を選択できないループ数
+
+#----- 障害物回避実験用 -----
+
+# #速度制限(Dynamic Window関連)
+# max_vel: 0.2  #最高並進速度[m/s]
+# min_vel: 0.0  #最低並進速度[m/s]
+# max_yawrate: 1.0 #最高旋回速度[rad/s]
+#
+# #加速度制限(Dynamic Window関連)
+# max_accel: 1.0  #最高並進加速度[m/s^2]
+# max_yawaccel: 1.0  #最高旋回加速度[m/s^2]
+#
+# #速度解像度
+# vel_step: 0.05
+# yawrate_step: 0.1
+#
+# #時間[s]
+# dt: 0.1  #微小時間
+# predict_time: 5.0  #軌道予測時間[s]
+#
+# #機体サイズ(半径)[m]
+# roomba_radius: 0.25  #ルンバの半径
+# radius_margin: 0.1  #衝突半径の予測
+#
+# #重み定数
+# weight_heading: 0.8  #評価関数1項目(heading)
+# weight_distance: 1.5  #評価関数2項目(distance)
+# weight_velocity: 1.0  #評価関数3項目(velocity)
+# weight_yawrate: 1.0  #評価関数4項目(yawrate)
+#
+# #許容誤差[m]
+# goal_tolerance: 0.8  #waypoints_に対する許容誤差
+#
+# #評価関数2項目(distance)で探索する範囲[m]
+# search_range: 0.95
+#
+# #障害物で止まってしまった後に動き出す
+# stop_counter: 0  #停止しているループ数
+# stop_time: 5  #停止してから動き出すまでのループ数
+# move_time: 30  #停止を選択できないループ数
