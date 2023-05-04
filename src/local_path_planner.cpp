@@ -525,8 +525,8 @@ void DWA::process()
             std::vector<double> input = calc_input();
 
             //roomba4が右にそれるのを防ぐ
-            if((input[0] > 0.2) && (abs(input[1]) <= yawrate_step_*0.5))
-                input[1] += 0.3;
+            if((input[0] > 0.2) && (abs(input[1]) >= yawrate_step_*0.5))
+                input[1] += 0.15;
 
             roomba_control(input[0], input[1]);
             // ROS_INFO("yattane!");  //デバック用
