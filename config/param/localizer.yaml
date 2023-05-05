@@ -14,7 +14,7 @@ laser_ignore_range: 0.20
 expansion_limit: 30
 expansion_reset_dev: 0.020
 
-alpha_th: 0.80
-alpha_th_expansion: 0.080
+alpha_th: 0.30
+alpha_th_expansion: 0.030
 alpha_slow_th: 0.001
 alpha_fast_th: 0.1
