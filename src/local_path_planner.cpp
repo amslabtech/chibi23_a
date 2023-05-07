@@ -385,7 +385,7 @@ std::vector<double> DWA::calc_input()
                 score_sum = 0.0;
                 int l = 0;  //カウンタ変数
 
-                // ROS_INFO("scores[%d][%d] = %lf", i, j, scores[i][j]);  //デバッグ用
+                ROS_INFO("scores[%d][%d] = %lf", i, j, scores[i][j]);  //デバッグ用
 
                 for(int m=i-1; m<=i+1; m++)
                 {
@@ -403,21 +403,20 @@ std::vector<double> DWA::calc_input()
                 if(l != 0)
                 {
                     smoothing_score = score_sum / l;
-                    // ROS_INFO("smoothing_score = %lf", smoothing_score);  //デバック用
+                    ROS_INFO("smoothing_score[%d][%d] = %lf", i, j, smoothing_score);  //デバック用
                 }
 
                 //評価値が一番大きいデータの探索
                 if(max_score < smoothing_score)
                 {
-                    // if((stop_counter_ > 0) && (i < 0.5) && (abs(yawrate) < yawrate_step_*2.0))  //後で直す
-                    if(!((stop_counter_ > 0) && (i == 0) && (j == 0)))
-                    {
-                        max_score = smoothing_score;
-                        max_vel_score_index = i;
-                        max_yawrate_score_index = j;
-                        max_score_index = k;
-                        // ROS_INFO("update max_score");  //デバック用
-                    }
+                    if((stop_counter_ > 0) && (i < 0.5) && (j > yawrate_size/2.0 - 2.0) && (j < yawrate_size/2.0 + 2.0))
+                        continue;
+
+                    max_score = smoothing_score;
+                    max_vel_score_index = i;
+                    max_yawrate_score_index = j;
+                    max_score_index = k;
+                    // ROS_INFO("update max_score");  //デバック用
                 }
 
                 k++;
@@ -525,8 +524,8 @@ void DWA::process()
             std::vector<double> input = calc_input();
 
             //roomba4が右にそれるのを防ぐ
-            if((input[0] > 0.2) && (abs(input[1]) >= yawrate_step_*0.5))
-                input[1] += 0.15;
+            // if((input[0] > 0.2) && (abs(input[1]) >= yawrate_step_*0.5))
+                // input[1] += 0.15;
 
             roomba_control(input[0], input[1]);
             // ROS_INFO("yattane!");  //デバック用
