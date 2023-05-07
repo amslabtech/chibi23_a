@@ -385,7 +385,7 @@ std::vector<double> DWA::calc_input()
                 score_sum = 0.0;
                 int l = 0;  //カウンタ変数
 
-                ROS_INFO("scores[%d][%d] = %lf", i, j, scores[i][j]);  //デバッグ用
+                // ROS_INFO("scores[%d][%d] = %lf", i, j, scores[i][j]);  //デバッグ用
 
                 for(int m=i-1; m<=i+1; m++)
                 {
@@ -403,7 +403,7 @@ std::vector<double> DWA::calc_input()
                 if(l != 0)
                 {
                     smoothing_score = score_sum / l;
-                    ROS_INFO("smoothing_score[%d][%d] = %lf", i, j, smoothing_score);  //デバック用
+                    // ROS_INFO("smoothing_score[%d][%d] = %lf", i, j, smoothing_score);  //デバック用
                 }
 
                 //評価値が一番大きいデータの探索
@@ -445,8 +445,8 @@ std::vector<double> DWA::calc_input()
     roomba_.velocity = input[0];
     roomba_.yawrate = input[1];
 
-    ROS_INFO("roomba_.velocity: %lf", roomba_.velocity);  //デバック用
-    ROS_INFO("roomba_.yawrate : %lf", roomba_.yawrate);  //デバック用
+    // ROS_INFO("roomba_.velocity: %lf", roomba_.velocity);  //デバック用
+    // ROS_INFO("roomba_.yawrate : %lf", roomba_.yawrate);  //デバック用
 
     //パスを可視化して適切なパスが選択できているかを評価
     if(visualize_check_ == true)
