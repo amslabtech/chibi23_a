@@ -268,7 +268,6 @@ std::vector<double> DWA::calc_input()
     // ROS_INFO("calc dynamic_window success!");  //デバック用
 
     double one_score;  //計算したスコア格納用
-    std::vector<double> score_yawrate;  //計算したスコア一時保存用
     std::vector< std::vector<double> > scores;  //すべての制御入力に対する評価値格納用
     std::vector< std::vector<State> > trajectories;  //すべての軌跡格納用
 
@@ -293,7 +292,7 @@ std::vector<double> DWA::calc_input()
                 // ROS_INFO("create predict_trajectory success!");  //デバック用
 
                 one_score = calc_evaluation(traj, yawrate);  //予測軌道に評価関数を適用
-                score_yawrate.push_back(one_score);
+                // score_yawrate.push_back(one_score);
                 // ROS_INFO("velocity: %lf", velocity);  //デバック用
                 // ROS_INFO("yawrate : %lf", yawrate);  //デバック用
                 // ROS_INFO("score   : %lf", one_score);  //デバック用
@@ -314,17 +313,6 @@ std::vector<double> DWA::calc_input()
 
                 j++;
             }
-
-            scores.push_back(score_yawrate);
-
-            //yawrateの分割個数を格納
-            if(i == 0)
-            {
-                yawrate_size = j;
-                // ROS_INFO("yawrate_size = %d", yawrate_size);  //デバック用
-            }
-
-            i++;
         }
     }
     //-----------スムージング関数の適用あり-----------
@@ -333,6 +321,8 @@ std::vector<double> DWA::calc_input()
         //並進速度と旋回速度のすべての組み合わせを評価
         for(double velocity=dw_.min_vel; velocity<=dw_.max_vel; velocity+=vel_step_)
         {
+            std::vector<double> score_yawrate;  //計算したスコア一時保存用
+
             for(double yawrate=dw_.min_yawrate; yawrate<=dw_.max_yawrate; yawrate+=yawrate_step_)
             {
                 std::vector<State> traj = predict_trajectory(velocity, yawrate);  //予測軌道を生成
@@ -342,7 +332,7 @@ std::vector<double> DWA::calc_input()
                 score_yawrate.push_back(one_score);
                 // ROS_INFO("velocity: %lf", velocity);  //デバック用
                 // ROS_INFO("yawrate : %lf", yawrate);  //デバック用
-                // ROS_INFO("score   : %lf", one_score);  //デバック用
+                ROS_INFO("score[%lf][%lf] : %lf",velocity, yawrate, one_score);  //デバック用
                 trajectories.push_back(traj);
 
                 j++;
