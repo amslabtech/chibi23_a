@@ -51,7 +51,7 @@ class DWA
         double calc_velocity_eval(std::vector<State>& traj);  //velocity(3項目)の評価関数を計算する
         double calc_yawrate_eval(double yawrate);  //左右交互にパスを選択しないようにする(評価関数4項目)
         double optimize_angle(double theta);  //適切な角度(-M_PI~M_PI)に変換
-        void visualize_traj(std::vector<State>& traj, const ros::Publisher& pub_local_path,ros::Time now);  //軌道を可視化
+        void visualize_traj(std::vector<State>& traj, const ros::Publisher& pub_local_path, ros::Time now);  //軌道を可視化
         void roomba_control(double velocity, double yawrate);  //roombaの制御入力
 
         //引数なし関数

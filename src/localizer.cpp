@@ -136,7 +136,7 @@ void Localizer::initialize()
 
 void Localizer::publish_particles()
 {
-    particle_cloud_msg_.header.stamp = ros::Time::now();
+    particle_cloud_msg_.header.stamp = ros::Time(0);
     particle_cloud_msg_.header.frame_id = "map";
     particle_cloud_msg_.poses.resize(particles_.size());
 
@@ -155,7 +155,7 @@ void Localizer::publish_particles()
 
 void Localizer::publish_estimated_pose()
 {
-    estimated_pose_msg_.header.stamp = ros::Time::now();
+    estimated_pose_msg_.header.stamp = ros::Time(0);
     estimated_pose_msg_.header.frame_id = "map";
 
     estimated_pose_msg_.pose.position.x = estimated_pose_.get_pose_x();
@@ -663,7 +663,7 @@ void Localizer::broadcast_roomba_state()
     tf::quaternionTFToMsg(tf::createQuaternionFromYaw(roomba_state_yaw), roomba_state_q);
 
     geometry_msgs::TransformStamped roomba_state;
-    roomba_state.header.stamp = ros::Time::now();
+    roomba_state.header.stamp = ros::Time(0);
 
     roomba_state.header.frame_id = "map";
     roomba_state.child_frame_id = "odom";  //gitのやつがうまくいかなかったらこれ使う　1行下はコメントアウト

@@ -1,17 +1,10 @@
 <?xml version="1.0"?>
-<!--
-デバッグ用の出力あり
-
-===== Param =====
-以下のように設定すること
-- local_path_planner
-    visualize_check_: true
--->
 
 <launch>
+    <machine name="robot1" address="192.168.0.186" env-loader="/home/amsl/catkin_ws/devel/env.sh"/>
     <!-- config file path -->
     <arg name="rviz_settings" default="$(find chibi23_a)/config/rviz/all.rviz"/>
-    <arg name="map_settings" default="$(find chibi23_a)/map/map.yaml"/>
+    <!-- <arg name="map_settings" default="/home/amsl/catkin_ws/src/chibi23_a/map/map.yaml"/> -->
     <arg name="localizer_settings" default="$(find chibi23_a)/config/param/localizer.yaml"/>
     <!-- <arg name="obstacle_expander_settings" default="$(find chibi23_a)/config/param/obstacle_expander.yaml"/> -->
     <arg name="global_path_planner_settings" default="$(find chibi23_a)/config/param/global_path_planner.yaml"/>
@@ -24,38 +17,38 @@
     <node pkg="tf2_ros" type="static_transform_publisher" name="static_transform_publisher" args="0 0 0 0 0 0 1 /base_link /laser"/>
 
     <!-- Roomba -->
-    <node pkg="roomba_500driver_meiji" type="main500" name="roomba_500driver_meiji"/>
+    <node machine="robot1" pkg="roomba_500driver_meiji" type="main500" name="roomba_500driver_meiji"/>
 
     <!-- LiDAR -->
     <!-- Roomba4 -->
     <!-- <node pkg="urg_node" type="urg_node" name="urg_node" args="_ip_address:=192.168.1.222"/> -->
     <!-- Roomba5 -->
-    <!-- <node pkg="urg_node" type="urg_node" name="urg_node" args="_ip_address:=192.168.1.221"/> -->
+    <node machine="robot1" pkg="urg_node" type="urg_node" name="urg_node" args="_ip_address:=192.168.1.221"/>
     <!-- Roomba6 -->
-    <node pkg="urg_node" type="urg_node" name="urg_node" args="_serial_port:=/dev/ttyACM0"/>
+    <!-- <node machine="robot1" pkg="urg_node" type="urg_node" name="urg_node" args="_serial_port:=/dev/ttyACM0"/> -->
 
     <!-- node launch -->
     <node pkg="rviz" type="rviz" name="rviz" args="-d $(arg rviz_settings)"/>
-    <node pkg="chibi23_a" type="localizer" name="localizer" output="screen">
+    <node machine="robot1" pkg="chibi23_a" type="localizer" name="localizer" output="screen">
         <rosparam command="load" file="$(arg localizer_settings)"/>
     </node>
-    <node pkg="chibi23_a" type="local_goal_creator" name="local_goal_creator" output="screen">
+    <node machine="robot1" pkg="chibi23_a" type="local_goal_creator" name="local_goal_creator">
         <rosparam command="load" file="$(arg local_goal_creator_settings)"/>
     </node>
    <!-- <node pkg="chibi23_a" type="obstacle_expander_node" name="obstacle_expander" output="screen"> -->
         <!-- <rosparam command="load" file="$(arg obstacle_expander_settings)"/> -->
     <!-- </node> -->
-    <node pkg="chibi23_a" type="global_path_planner" name="global_path_planner" output="screen">
+    <node machine="robot1" pkg="chibi23_a" type="global_path_planner" name="global_path_planner">
         <rosparam command="load" file="$(arg global_path_planner_settings)"/>
     </node>
-    <node pkg="chibi23_a" type="obstacle_detector" name="obstacle_detector" output="screen">
+    <node machine="robot1" pkg="chibi23_a" type="obstacle_detector" name="obstacle_detector">
         <!-- <rosparam command="load" file="$(arg obstacle_detector_settings)"/> -->
     </node>
     <!-- <node pkg="chibi23_a" type="local_map_creator_node" name="local_map_creator" output="screen"> -->
         <!-- <rosparam command="load" file="$(arg local_map_creator_settings)"/> -->
     <!-- </node> -->
-    <node pkg="chibi23_a" type="local_path_planner" name="local_path_planner" output="screen">
+    <node machine="robot1" pkg="chibi23_a" type="local_path_planner" name="local_path_planner" output="screen">
         <rosparam command="load" file="$(arg local_path_planner_settings)"/>
     </node>
-    <node pkg="map_server" type="map_server" name="map_server" args="$(arg map_settings)" output="screen"/>
+    <node machine="robot1" pkg="map_server" type="map_server" name="map_server" args="/home/amsl/catkin_ws/src/chibi23_a/map/map.yaml"/>
 </launch>
